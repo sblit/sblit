@@ -6,6 +6,7 @@ import java.util.HashSet;
 import org.dclayer.exception.net.buf.BufException;
 import org.sblit.Sblit;
 import org.sblit.configuration.Configuration;
+import org.sblit.crypto.SymmetricEncryption;
 import org.sblit.filesync.Packet;
 import org.sblit.filesync.PacketStarts;
 
@@ -36,11 +37,11 @@ public class ConflictRequest implements Packet {
 		byte[] data = new String(PacketStarts.CONFLICT_REQUEST + ","
 				+ originalFile + "," + newFile + "," + timestamp.getTime())
 				.getBytes();
-		// TODO encryption
-		byte[] encryptedData = new byte[34];
+		byte[] encryptedData = new SymmetricEncryption(Configuration.getKey())
+				.encrypt(data);
 		for (String receiver : Configuration.getReceivers())
-			Configuration.getApp().send(data, Sblit.APPLICATION_IDENTIFIER,
-					receiver);
+			Configuration.getApp().send(encryptedData,
+					Sblit.APPLICATION_IDENTIFIER, receiver);
 	}
 
 	public long getTimestamp() {

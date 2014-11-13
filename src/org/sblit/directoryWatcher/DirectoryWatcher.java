@@ -15,6 +15,8 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,10 +77,11 @@ public class DirectoryWatcher {
 						.context().toString()));
 
 				// Überprüft, was mit dem File passiert ist
+				MessageDigest md = MessageDigest.getInstance("SHA");
+				md.update(fileContent);
 				if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-					//TODO hashcode
 					files.put(event.context().toString(),
-							" ;" + fileContent.hashCode() + ";"
+							" ;" + md.digest() + ";"
 									+ deviceIdentifier);
 					filesToPush = refreshFilesArray(filesToPush, new File(event
 							.context().toString()));
@@ -97,7 +100,7 @@ public class DirectoryWatcher {
 								event.context().toString()).split(";")[0];
 						files.remove(event.context().toString());
 						files.put(event.context().toString(), oldHashCode + ";"
-								+ fileContent.hashCode() + ";"
+								+ md.digest() + ";"
 								+ deviceIdentifier);
 						filesToPush = refreshFilesArray(filesToPush, new File(
 								event.context().toString()));
@@ -115,6 +118,8 @@ public class DirectoryWatcher {
 					.replace("}", ""));
 
 		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
 

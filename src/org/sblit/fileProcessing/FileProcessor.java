@@ -6,7 +6,7 @@ import java.io.IOException;
 
 import org.sblit.configuration.Configuration;
 import org.sblit.converter.Converter;
-import org.sblit.encryption.SymmetricEncryption;
+import org.sblit.crypto.SymmetricEncryption;
 
 public class FileProcessor {
 
@@ -41,12 +41,12 @@ public class FileProcessor {
 
 			for (int i = 0; i < encryptedFilePath.length; i++)
 				encryptedFilePath[i] = received[pathStart + 1 + i];
-			// TODO change to encryption from dclayer
+			
 			SymmetricEncryption encryption = new SymmetricEncryption(password);
 
-			byte[] logFile = encryption.decryptByteArray(encryptedLogFile);
-			byte[] file = encryption.decryptByteArray(encryptedFile);
-			byte[] filePath = encryption.decryptByteArray(encryptedFilePath);
+			byte[] logFile = encryption.decrypt(encryptedLogFile);
+			byte[] file = encryption.decrypt(encryptedFile);
+			byte[] filePath = encryption.decrypt(encryptedFilePath);
 
 			new FileWriter(logFile, file, filePath);
 

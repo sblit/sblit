@@ -117,5 +117,13 @@ public class Configuration {
 		return null;
 		//TODO return receivers
 	}
+	/**
+	 * Returns the symmetric key
+	 * @return
+	 */
+	public static byte[] getKey(){
+		return null;
+		//TODO symmetric key
+	}
 	
 }

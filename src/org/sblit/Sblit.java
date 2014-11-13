@@ -36,7 +36,7 @@ public class Sblit {
 //					DirectoryWatcher directoryWatcher = new DirectoryWatcher(new File("C:\\Users\\Nikola\\Documents"), new File("C:\\Users\\Nikola\\test.txt"), "1");
 //					fileSender.send(directoryWatcher.getFilesToPush(), directoryWatcher.getLogFile());
 //				} catch (IOException | BufException e) {
-//					// TODO Auto-generated catch block
+//					
 //					e.printStackTrace();
 //				} 
 //			}

@@ -3,11 +3,14 @@ package org.sblit.filesync;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 
 import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.lib.DCLApplication;
 import org.sblit.configuration.Configuration;
+import org.sblit.crypto.SymmetricEncryption;
 import org.sblit.fileProcessing.FileProcessor;
 import org.sblit.fileProcessing.FileWriter;
 import org.sblit.filesync.exceptions.TimestampException;
@@ -37,8 +40,9 @@ public class Receiver implements Runnable {
 	public void run() {
 		while (true)
 			try {
-				//TODO encrypt
-				byte[] received = receive();
+				//TODO handle foreign files
+				byte[] received = new SymmetricEncryption(Configuration.getKey()).decrypt(receive());
+				
 				if (new String(received)
 						.startsWith(PacketStarts.CONFLICT_REQUEST.toString())) {
 					handleConflictRequest(received);
@@ -61,9 +65,17 @@ public class Receiver implements Runnable {
 
 	private void handleFileRequest(byte[] received) throws IOException{
 		String data = new String(received);
-		//TODO hashcode von Bouncing Castle übernehmen
-		int hashcode = Integer.parseInt(data.split(",")[1]);
-		String temp = new String(Files.readAllBytes(Paths.get(Configuration.getConfigurationDirectory() + Configuration.LOG_FILE)));
+		//TODO handle request
+		byte[] otherHashcode = data.split(",")[1].getBytes();
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance("SHA");
+			md.update(Files.readAllBytes(Paths.get(Configuration
+					.getConfigurationDirectory() + Configuration.LOG_FILE)));
+			byte[] myHashcode = md.digest();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
 		
 	}
 	

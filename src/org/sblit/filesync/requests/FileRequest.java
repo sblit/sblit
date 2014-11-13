@@ -5,6 +5,7 @@ import java.util.HashSet;
 import org.dclayer.exception.net.buf.BufException;
 import org.sblit.Sblit;
 import org.sblit.configuration.Configuration;
+import org.sblit.crypto.SymmetricEncryption;
 import org.sblit.filesync.Packet;
 import org.sblit.filesync.PacketStarts;
 
@@ -21,9 +22,9 @@ public class FileRequest implements Packet {
 	@Override
 	public void send() throws BufException {
 		byte[] data = new String(PacketStarts.FILE_REQUEST.toString() + "," + hashcode).getBytes();
-		// TODO verschlüsseln
+		byte[] encryptedData = new SymmetricEncryption(Configuration.getKey()).encrypt(data);
 		for (String receiver : Configuration.getReceivers())
-			Configuration.getApp().send(data, Sblit.APPLICATION_IDENTIFIER,
+			Configuration.getApp().send(encryptedData, Sblit.APPLICATION_IDENTIFIER,
 					receiver);
 	}
 

@@ -7,6 +7,7 @@ import javax.crypto.spec.SecretKeySpec;
  * 
  * @author Nikola
  * 
+ * USE org.sblit.crypto.SymmetricEncryption INSTEAD!
  */
 @Deprecated
 public class SymmetricEncryption {
