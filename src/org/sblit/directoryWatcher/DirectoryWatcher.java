@@ -31,7 +31,7 @@ public class DirectoryWatcher {
 	/**
 	 * 
 	 */
-	private final static int TIME_TO_SLEEP = 10000;
+	private final static int TIME_TO_SLEEP = 1000;
 
 	private File[] filesToPush;
 	private File[] filesToDelete;

@@ -7,11 +7,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+
+import org.sblit.crypto.AsymmetricEncryption;
 /**
  * 
  * @author Nikola
@@ -64,9 +65,7 @@ class AddressConfiguration {
 		configurationDirectory.mkdir();
 		try {
 			//Generates a new keypair
-			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-			keyGen.initialize(2048);
-			KeyPair keyPair = keyGen.generateKeyPair();
+			KeyPair keyPair = AsymmetricEncryption.generateNewKeyPair(2048);
 
 			privateKey = keyPair.getPrivate();
 			publicKey = keyPair.getPublic();

@@ -1,5 +1,6 @@
 package org.sblit.filesync.exceptions;
 
+@SuppressWarnings("serial")
 public class TimestampException extends Exception {
 	@Override
 	public String getMessage() {

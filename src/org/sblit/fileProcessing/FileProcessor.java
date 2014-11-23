@@ -5,7 +5,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.sblit.configuration.Configuration;
-import org.sblit.converter.Converter;
 import org.sblit.crypto.SymmetricEncryption;
 
 public class FileProcessor {

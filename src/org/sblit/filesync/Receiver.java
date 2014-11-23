@@ -1,11 +1,9 @@
 package org.sblit.filesync;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 
 import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.lib.DCLApplication;
@@ -16,6 +14,7 @@ import org.sblit.fileProcessing.FileWriter;
 import org.sblit.filesync.exceptions.TimestampException;
 import org.sblit.filesync.requests.ConflictRequest;
 import org.sblit.filesync.responses.ConflictResponse;
+import org.sblit.filesync.responses.FileResponse;
 
 /**
  * 
@@ -42,15 +41,15 @@ public class Receiver implements Runnable {
 			try {
 				//TODO handle foreign files
 				byte[] received = new SymmetricEncryption(Configuration.getKey()).decrypt(receive());
-				
-				if (new String(received)
-						.startsWith(PacketStarts.CONFLICT_REQUEST.toString())) {
+				String s = new String(received);
+				if (s.startsWith(PacketStarts.CONFLICT_REQUEST.toString())) {
 					handleConflictRequest(received);
-				} else if (new String(received)
-						.startsWith(PacketStarts.CONFLICT_RESPONSE.toString())) {
+				} else if (s.startsWith(PacketStarts.CONFLICT_RESPONSE.toString())) {
 					handleConflictResponse(received);
-				} else if(new String(received).startsWith(PacketStarts.FILE_REQUEST.toString())) {
+				} else if(s.startsWith(PacketStarts.FILE_REQUEST.toString())) {
 					handleFileRequest(received);
+				} else if(s.startsWith(PacketStarts.FILE_RESPONSE.toString())){
+					handleFileResponse(received);
 				} else {
 					FileProcessor fileProcessor = new FileProcessor(received);
 					byte[] checksum = receive();
@@ -62,20 +61,32 @@ public class Receiver implements Runnable {
 			}
 
 	}
+	
+	private void handleFileResponse(byte[] received) throws IOException{
+		String data = new String(received); 
+		if(Boolean.parseBoolean(data.split(",")[1])){
+			try {
+				new FileSender(Configuration.getKey(), app, Configuration.getPublicAddressKey().toString()).sendOwnFiles(Configuration.getReceivers(), new File[]{}, new File(Configuration.getConfigurationDirectory() + Configuration.LOG_FILE));
+			} catch (BufException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
 
 	private void handleFileRequest(byte[] received) throws IOException{
 		String data = new String(received);
 		//TODO handle request
 		byte[] otherHashcode = data.split(",")[1].getBytes();
-		MessageDigest md;
-		try {
-			md = MessageDigest.getInstance("SHA");
-			md.update(Files.readAllBytes(Paths.get(Configuration
-					.getConfigurationDirectory() + Configuration.LOG_FILE)));
-			byte[] myHashcode = md.digest();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
+		boolean need;
+		if (new String(Files.readAllBytes(Paths.get(Configuration
+				.getConfigurationDirectory() + Configuration.LOG_FILE)))
+				.contains(new String(otherHashcode))) {
+			need=false;
+		} else {
+			need=true;
 		}
+		new FileResponse(need, otherHashcode);
 		
 	}
 	

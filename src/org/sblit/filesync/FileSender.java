@@ -10,7 +10,6 @@ import java.security.NoSuchAlgorithmException;
 import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.lib.DCLApplication;
 import org.sblit.Sblit;
-import org.sblit.converter.Converter;
 import org.sblit.crypto.SymmetricEncryption;
 
 /**

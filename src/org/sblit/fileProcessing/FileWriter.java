@@ -75,7 +75,6 @@ public class FileWriter {
 
 				myLogFile.put(files[i], value);
 			}
-
 		}
 		logs.delete();
 		logs.createNewFile();

@@ -1,5 +1,7 @@
 package org.sblit.crypto;
 
+import javax.crypto.SecretKey;
+
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
@@ -18,10 +20,13 @@ import org.bouncycastle.crypto.params.KeyParameter;
  */
 
 public class SymmetricEncryption {
-	CipherParameters key;
+	
+	public static final int KEY_SIZE = 4096; //In bit
+	
+	private CipherParameters key;
 	
 	public SymmetricEncryption(byte[] key) {
-		assert key.length == 512; //512 Byte == 4096 Bit
+		assert key.length == KEY_SIZE/8; //Convert bit to byte
 		this.key = new KeyParameter(key);
 	}
 	
@@ -50,8 +55,8 @@ public class SymmetricEncryption {
 		return process(encrypted, false);
 	}
 	
-	public static byte[] generateKey(){
-		//TODO generate key
+	public static SecretKey generateKey(){
+		
 		return null;
 	}
 }

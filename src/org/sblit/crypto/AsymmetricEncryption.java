@@ -1,6 +1,11 @@
 package org.sblit.crypto;
 
+import java.security.KeyPair;
+
 public class AsymmetricEncryption {
+	
+	public static final int KEY_SIZE = 2048; //In bit
+	public static final int RSA_ADDRESS_KEY_CERTAINTY = 160;
 	
 	byte[] publicKey;
 	byte[] privateKey;
@@ -15,16 +20,20 @@ public class AsymmetricEncryption {
 	}
 	
 	public byte[] encrypt(byte[] data) throws NullPointerException{
-		if(publicKey == null)
+		if(privateKey == null)
 			throw new NullPointerException();
 		//TODO asymmetric encryption
 		return null;
 	}
 	
 	public byte[] decrypt(byte[] data) throws NullPointerException {
-		if(privateKey == null)
+		if(publicKey == null)
 			throw new NullPointerException();
 		//TODO
+		return null;
+	}
+	
+	public static KeyPair generateNewKeyPair(int numBits){
 		return null;
 	}
 	
