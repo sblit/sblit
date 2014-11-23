@@ -50,7 +50,10 @@ public class Receiver implements Runnable {
 					handleFileRequest(received);
 				} else if(s.startsWith(PacketStarts.FILE_RESPONSE.toString())){
 					handleFileResponse(received);
+				} else if(s.startsWith(PacketStarts.AUTHENTICY_REQUEST.toString())){
+					handleAuthenticyRequest(received);
 				} else {
+				
 					FileProcessor fileProcessor = new FileProcessor(received);
 					byte[] checksum = receive();
 				}
@@ -62,13 +65,17 @@ public class Receiver implements Runnable {
 
 	}
 	
+	private void handleAuthenticyRequest(byte[] received){
+		String data = new String(received);
+		//TODO decrypt asymmetrically 
+	}
+	
 	private void handleFileResponse(byte[] received) throws IOException{
 		String data = new String(received); 
 		if(Boolean.parseBoolean(data.split(",")[1])){
 			try {
 				new FileSender(Configuration.getKey(), app, Configuration.getPublicAddressKey().toString()).sendOwnFiles(Configuration.getReceivers(), new File[]{}, new File(Configuration.getConfigurationDirectory() + Configuration.LOG_FILE));
 			} catch (BufException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -76,7 +83,6 @@ public class Receiver implements Runnable {
 
 	private void handleFileRequest(byte[] received) throws IOException{
 		String data = new String(received);
-		//TODO handle request
 		byte[] otherHashcode = data.split(",")[1].getBytes();
 		boolean need;
 		if (new String(Files.readAllBytes(Paths.get(Configuration

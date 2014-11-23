@@ -2,7 +2,6 @@ package org.sblit.crypto;
 
 import java.security.SecureRandom;
 
-import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.crypto.BlockCipher;
@@ -15,8 +14,6 @@ import org.bouncycastle.crypto.paddings.BlockCipherPadding;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.paddings.ZeroBytePadding;
 import org.bouncycastle.crypto.params.KeyParameter;
-import org.bouncycastle.jcajce.provider.symmetric.AES;
-import org.bouncycastle.jcajce.provider.symmetric.util.BaseKeyGenerator;
 
 /**
  * 
