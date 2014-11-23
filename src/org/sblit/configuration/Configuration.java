@@ -10,7 +10,6 @@ import javax.swing.JOptionPane;
 
 import org.dclayer.lib.DCLApplication;
 import org.sblit.Sblit;
-import org.sblit.configuration.gui.DataDirectoryChooser;
 
 /**
  * Contains the whole configuration for Sblit
@@ -25,8 +24,10 @@ public class Configuration {
 	private static File configurationDirectory;
 	private static PrivateKey privateAddressKey;
 	private static PublicKey publicAddressKey;
-	private static File dataDirectory;
 	private static DCLApplication app = null;
+	private static ReceiverConfiguration receiverConfiguration;
+	private static DataDirectoryConfiguration dataDirectoryConfiguration;
+	private static KeyConfiguration keyConfiguration;
 	//private String receivers;
 	
 	/**
@@ -50,14 +51,15 @@ public class Configuration {
 		} else {
 			configurationDirectory = new File("~/.SBLIT/");
 		}
-		
+		receiverConfiguration = new ReceiverConfiguration(configurationDirectory.getAbsolutePath());
+		keyConfiguration = new KeyConfiguration(configurationDirectory.getAbsolutePath(), os);
 		System.out.println(configurationDirectory.getAbsolutePath());
 		
 //	TODO	AddressConfiguration addressConfiguration = new AddressConfiguration(configurationDirectory, os);
 //	TODO	privateAddressKey = addressConfiguration.getPrivateKey();
 //	TODO	publicAddressKey = addressConfiguration.getPublicKey();
-		DataDirectoryChooser dataDirectoryChooser = new DataDirectoryChooser(configurationDirectory);
-		dataDirectory = dataDirectoryChooser.getDataDirectory();
+		dataDirectoryConfiguration = new DataDirectoryConfiguration(configurationDirectory.getAbsolutePath());
+		
 		
 		//TODO passwordConfiguration
 	}
@@ -67,7 +69,7 @@ public class Configuration {
 	 *  The configured data-directory for Sblit
 	 */
 	public static File getSblitDirectory(){
-		return dataDirectory;
+		return dataDirectoryConfiguration.getDataDirectory();
 	}
 	
 	/**
@@ -114,16 +116,26 @@ public class Configuration {
 	 * Returns OWN devices!
 	 */
 	public static String[] getReceivers(){
-		return null;
-		//TODO return receivers
+		return receiverConfiguration.getReceivers();
 	}
 	/**
 	 * Returns the symmetric key
 	 * @return
 	 */
 	public static byte[] getKey(){
-		return null;
-		//TODO symmetric key
+		return keyConfiguration.getKey();
+	}
+	
+	protected static void addReceiver(String receiver){
+		receiverConfiguration.addReceiver(receiver);
+	}
+	
+	protected static void setSblitDirectory(String directory){
+		dataDirectoryConfiguration.setDataDirectory(directory);
+	}
+	
+	protected void setSymmetricKey(byte[] key){
+		keyConfiguration.setKey(key);
 	}
 	
 }

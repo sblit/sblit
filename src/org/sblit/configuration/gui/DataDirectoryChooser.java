@@ -14,6 +14,7 @@ import javax.swing.JFileChooser;
  * @author Nikola
  *
  */
+@Deprecated
 public class DataDirectoryChooser {
 	private File dataDirectoryFile;
 	private JFileChooser fileChooser;
