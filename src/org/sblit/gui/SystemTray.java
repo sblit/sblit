@@ -46,17 +46,6 @@ public class SystemTray {
 				}
 			});
 			final Menu menu = new Menu(shell, SWT.POP_UP);
-//			for (int i = 0; i < 8; i++) {
-//				MenuItem mi = new MenuItem(menu, SWT.PUSH);
-//				mi.setText("Item" + i);
-//				mi.addListener(SWT.Selection, new Listener() {
-//					public void handleEvent(Event event) {
-//						System.out.println("selection " + event.widget);
-//					}
-//				});
-//				if (i == 0)
-//					menu.setDefaultItem(mi);
-//			}
 			MenuItem configurationMenuItem = new MenuItem(menu, SWT.PUSH);
 			configurationMenuItem.setText("Configuration");
 			configurationMenuItem.addListener(SWT.Selection, new Listener() {
