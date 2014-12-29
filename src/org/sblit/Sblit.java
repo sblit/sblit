@@ -1,5 +1,8 @@
 package org.sblit;
 
+import org.dclayer.crypto.key.KeyPair;
+import org.dclayer.crypto.key.RSAKey;
+import org.dclayer.crypto.key.RSAPublicKey;
 import org.sblit.configuration.Configuration;
 import org.sblit.filesync.PacketStarts;
 
@@ -13,7 +16,12 @@ public class Sblit {
 	public static final String APPLICATION_IDENTIFIER = "org.sblit";
 	
 	public static void main(String[] args) {
-		new Sblit();
+		for(int i = 0; i < 1000; i++){
+		KeyPair<RSAKey> keyPair = org.dclayer.crypto.Crypto.generateAddressRSAKeyPair();
+		RSAPublicKey pk = (RSAPublicKey) keyPair.getPublicKey();
+		pk.toData();
+		}
+		//new Sblit();
 
 	}
 	

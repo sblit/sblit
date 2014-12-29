@@ -7,19 +7,24 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 
 public class ReceiverConfiguration {
 
 	protected static final String RECEIVER_PATH = "receivers.txt";
-	private String[] receivers = null;
+	private HashMap<String, String> receivers = new HashMap<String,String>();
 	private File receiverFile;
 
 	public ReceiverConfiguration(String configurationDirectory) {
 		receiverFile = new File(configurationDirectory + RECEIVER_PATH);
 		if (receiverFile.exists()) {
 			try {
-				receivers = new String(Files.readAllBytes(Paths
+				String[] receivers = new String(Files.readAllBytes(Paths
 						.get(receiverFile.getAbsolutePath()))).split(",");
+				for(String receiver : receivers){
+					String[] temp = receiver.split("=");
+					this.receivers.put(temp[0], temp[1]);
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -32,18 +37,17 @@ public class ReceiverConfiguration {
 		}
 	}
 
-	public String[] getReceivers() {
+	public HashMap<String,String> getReceivers() {
 		return receivers;
 	}
 
-	void addReceiver(String receiver) {
+	void addReceiver(String name, String receiver) {
 		try {
+			receivers.put(name,receiver);
 			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
 					new FileOutputStream(receiverFile)));
-			String temp = "";
-			for (String s : receivers)
-				temp += s + ",";
-			temp += receiver;
+			String temp = receivers.toString();
+			temp = temp.substring(1,temp.length()-1);
 			bw.write(temp);
 			bw.close();
 		} catch (IOException e) {

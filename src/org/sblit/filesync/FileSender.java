@@ -2,14 +2,17 @@ package org.sblit.filesync;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.dclayer.application.ApplicationInstance;
 import org.dclayer.exception.net.buf.BufException;
-import org.dclayer.lib.DCLApplication;
+import org.dclayer.net.Data;
 import org.sblit.Sblit;
+import org.sblit.configuration.Configuration;
 import org.sblit.crypto.SymmetricEncryption;
 
 /**
@@ -21,7 +24,7 @@ public class FileSender {
 
 	private File dataDirectory;
 	private String ownAddress;
-	private DCLApplication app;
+	private ApplicationInstance app;
 	private byte[] password;
 
 	/**
@@ -35,7 +38,7 @@ public class FileSender {
 	 * @param ownAddress
 	 *            Own address for identification in the cloud.
 	 */
-	public FileSender(byte[] password, DCLApplication app, String ownAddress) {
+	public FileSender(byte[] password, ApplicationInstance app, String ownAddress) {
 		this.app = app;
 		this.password = password;
 		this.ownAddress = ownAddress;
@@ -55,7 +58,7 @@ public class FileSender {
 	 * @throws BufException
 	 *             If a problem while sending data occurs
 	 */
-	public void sendOwnFiles(String[] receivers, File[] filesToPush,
+	public void sendOwnFiles(File[] filesToPush,
 			File logFile) throws IOException, BufException {
 		for (File f : filesToPush) {
 			byte[] ownAddress = this.ownAddress.getBytes();
@@ -103,7 +106,7 @@ public class FileSender {
 							+ encryptedLogFileContent.length
 							+ encryptedFileContent.length] = encryptedFilePath[i];
 
-				send(data, receivers);
+				send(data);
 			} catch (NoSuchAlgorithmException e) {
 				hash = "".getBytes();
 				e.printStackTrace();
@@ -125,11 +128,11 @@ public class FileSender {
 	 * @throws BufException
 	 *             If sending the file fails.
 	 */
-	public void sendForeignFiles(String[] receivers, File[] filesToPush)
+	public void sendForeignFiles(File[] filesToPush)
 			throws IOException, BufException {
 		for (File f : filesToPush) {
 			byte[] data = Files.readAllBytes(Paths.get(f.getAbsolutePath()));
-			send(data, receivers);
+			send(data);
 		}
 	}
 
@@ -143,17 +146,21 @@ public class FileSender {
 	 * @throws BufException
 	 *             If sending fails
 	 */
-	private void send(byte[] data, String[] receivers) throws BufException {
-		for (String receiver : receivers) {
+	private void send(byte[] data) throws IOException {
+		for (Data receiver : Configuration.getChannels()) {
 			System.out.println(receiver);
-			app.send(data, Sblit.APPLICATION_IDENTIFIER, receiver);
-			try {
-				MessageDigest md = MessageDigest.getInstance("SHA");
-				md.update(data);
-				app.send(md.digest(), Sblit.APPLICATION_IDENTIFIER, receiver);
-			} catch (NoSuchAlgorithmException e) {
-				e.printStackTrace();
-			}
+			OutputStream out = Configuration.getChannel(receiver)
+					.getOutputStream();
+			out.write(data);
+			out.flush();
+//			app.send(data, Sblit.APPLICATION_IDENTIFIER, receiver);
+//			try {
+//				MessageDigest md = MessageDigest.getInstance("SHA");
+//				md.update(data);
+//				app.send(md.digest(), Sblit.APPLICATION_IDENTIFIER, receiver);
+//			} catch (NoSuchAlgorithmException e) {
+//				e.printStackTrace();
+//			}
 
 		}
 	}

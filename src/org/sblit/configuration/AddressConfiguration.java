@@ -1,18 +1,20 @@
 package org.sblit.configuration;
 
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
+import java.io.OutputStreamWriter;
+import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
-import org.sblit.crypto.AsymmetricEncryption;
+import org.dclayer.crypto.key.KeyPair;
+import org.dclayer.crypto.key.RSAKey;
+import org.dclayer.crypto.key.RSAPrivateKey;
+import org.dclayer.crypto.key.RSAPublicKey;
+import org.dclayer.exception.crypto.InsufficientKeySizeException;
 /**
  * 
  * @author Nikola
@@ -29,8 +31,8 @@ class AddressConfiguration {
 	 * The file which contains the public address key.
 	 */
 	final static String PUBLIC_FILE = "/uk.txt";
-	private PrivateKey privateKey;
-	private PublicKey publicKey;
+	private RSAPrivateKey privateKey;
+	private RSAPublicKey publicKey;
 	
 	/**
 	 * Creates new addresses if not configured before.
@@ -41,11 +43,10 @@ class AddressConfiguration {
 	 * The operating system of the current system.
 	 */
 	AddressConfiguration(File configurationDirectory, String os) {
-		
 		try {
-			KeyPair keyPair = getKeyPair(configurationDirectory);
-			privateKey = keyPair.getPrivate();
-			publicKey = keyPair.getPublic();
+			KeyPair<RSAKey> keyPair = getKeyPair(configurationDirectory);
+			privateKey = (RSAPrivateKey) keyPair.getPrivateKey();
+			publicKey = (RSAPublicKey) keyPair.getPublicKey();
 		} catch (Exception e) {
 			createNewAddresses(configurationDirectory, os);
 		}
@@ -65,10 +66,8 @@ class AddressConfiguration {
 		configurationDirectory.mkdir();
 		try {
 			//Generates a new keypair
-			KeyPair keyPair = AsymmetricEncryption.generateNewKeyPair(2048);
-
-			privateKey = keyPair.getPrivate();
-			publicKey = keyPair.getPublic();
+			@SuppressWarnings("unchecked")
+			KeyPair<RSAKey> keyPair = org.dclayer.crypto.Crypto.generateAddressRSAKeyPair();
 			
 			saveKeyPair(keyPair, configurationDirectory, os);
 		} catch(Exception e1){
@@ -81,7 +80,7 @@ class AddressConfiguration {
 	 * @return
 	 * Returns the private address key.
 	 */
-	PrivateKey getPrivateKey(){
+	RSAPrivateKey getPrivateKey(){
 		return privateKey;
 	}
 	
@@ -90,7 +89,7 @@ class AddressConfiguration {
 	 * @return
 	 * Returns the public address key.
 	 */
-	PublicKey getPublicKey(){
+	RSAPublicKey getPublicKey(){
 		return publicKey;
 	}
 	
@@ -103,16 +102,15 @@ class AddressConfiguration {
 	 * @param os
 	 * The current operating system
 	 */
-	private void saveKeyPair(KeyPair keyPair, File configurationDirectory, String os){
-		PrivateKey privateKey = keyPair.getPrivate();
-		PublicKey publicKey = keyPair.getPublic();
+	private void saveKeyPair(KeyPair<RSAKey> keyPair, File configurationDirectory, String os){
+		RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivateKey();
+		RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublicKey();
 		//Writes the private key into the file
 		File privateFile = new File(configurationDirectory.getAbsolutePath() + PRIVATE_FILE);
 		try {
 			privateFile.createNewFile();
-			FileOutputStream privateOut = new FileOutputStream(privateFile);
-			X509EncodedKeySpec privateKeySpec = new X509EncodedKeySpec(privateKey.getEncoded());
-			privateOut.write(privateKeySpec.getEncoded());
+			BufferedWriter privateOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(privateFile)));
+			privateOut.write(privateKey.getExponent() + ";" + privateKey.getModulus());
 			privateOut.close();
 			
 			//Hides the file
@@ -122,9 +120,8 @@ class AddressConfiguration {
 			//Writes the public Key into the file
 			File publicFile = new File(configurationDirectory.getAbsolutePath() + PUBLIC_FILE);
 			publicFile.createNewFile();
-			FileOutputStream publicOut = new FileOutputStream(publicFile);
-			PKCS8EncodedKeySpec publicKeySpec = new PKCS8EncodedKeySpec(publicKey.getEncoded());
-			publicOut.write(publicKeySpec.getEncoded());
+			BufferedWriter publicOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(publicFile)));
+			publicOut.write(publicKey.getExponent() + ";" + publicKey.getModulus());
 			publicOut.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -143,33 +140,30 @@ class AddressConfiguration {
 	 * @throws IOException
 	 * If an error occurs while reading the file.
 	 */
-	private KeyPair getKeyPair(File configurationDirectory) throws FileNotFoundException, IOException{
+	private KeyPair<RSAKey> getKeyPair(File configurationDirectory) {
 		File privateFile = new File(configurationDirectory + PRIVATE_FILE);
 		File publicFile = new File(configurationDirectory + PUBLIC_FILE);
-		
-		byte[] privateKeyBytes = new byte[(int)privateFile.length()];
-		FileInputStream fis = new FileInputStream(privateFile);
-		fis.read(privateKeyBytes);
-		fis.close();
-		
-		byte[] publicKeyBytes = new byte[(int)publicFile.length()];
-		fis = new FileInputStream(publicFile);
-		fis.read(publicKeyBytes);
-		fis.close();
-		PublicKey publicKey = null;
-		PrivateKey privateKey = null;
-		
+
+		String privateKeyString;
+		RSAPrivateKey privateKey = null;
+		RSAPublicKey publicKey = null;
 		try {
-			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-			
-			privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(privateKeyBytes));
-			publicKey = keyFactory.generatePublic(new X509EncodedKeySpec(publicKeyBytes));
-		} catch (Exception e) {
+			privateKeyString = new String(Files.readAllBytes(Paths
+					.get(privateFile.getAbsolutePath())));
+			privateKey = new RSAPrivateKey(new BigInteger(
+					privateKeyString.split(";")[1]), new BigInteger(
+					privateKeyString.split(";")[0]));
+
+			String publicKeyString = new String(Files.readAllBytes(Paths
+					.get(publicFile.getAbsolutePath())));
+			publicKey = new RSAPublicKey(new BigInteger(
+					publicKeyString.split(";")[1]), new BigInteger(
+					publicKeyString.split(";")[0]));
+		} catch (InsufficientKeySizeException | IOException e) {
 			e.printStackTrace();
 		}
 		
-		
-		return new KeyPair(publicKey, privateKey);
+		return KeyPair.fromKeys(publicKey, privateKey);
 	}
 	
 }

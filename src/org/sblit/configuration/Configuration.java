@@ -1,15 +1,19 @@
 package org.sblit.configuration;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Set;
 
 import javax.swing.JOptionPane;
 
-import org.dclayer.lib.DCLApplication;
-import org.sblit.Sblit;
+import org.dclayer.application.ApplicationInstance;
+import org.dclayer.application.ApplicationInstanceBuilder;
+import org.dclayer.application.Service;
+import org.dclayer.application.applicationchannel.ApplicationChannel;
+import org.dclayer.crypto.key.RSAPrivateKey;
+import org.dclayer.crypto.key.RSAPublicKey;
+import org.dclayer.net.Data;
 
 /**
  * Contains the whole configuration for Sblit
@@ -18,16 +22,21 @@ import org.sblit.Sblit;
  */
 public class Configuration {
 	
+	//TODO add real default dcl port
+	private final static int DEFAULT_DCL_PORT = 132321;
+	
 	public static final String FOREIGN_FILES = "/foreign_files";
 	public static final String LOG_FILE = "/logs.txt";
 	
+	private static HashMap<String, Boolean> authenticatedReceivers = new HashMap<String,Boolean>();
 	private static File configurationDirectory;
-	private static PrivateKey privateAddressKey;
-	private static PublicKey publicAddressKey;
-	private static DCLApplication app = null;
+	private static RSAPrivateKey privateAddressKey;
+	private static RSAPublicKey publicAddressKey;
+	private static ApplicationInstance app = null;
 	private static ReceiverConfiguration receiverConfiguration;
 	private static DataDirectoryConfiguration dataDirectoryConfiguration;
 	private static KeyConfiguration keyConfiguration;
+	private static HashMap<Data,ApplicationChannel> channels;
 	//private String receivers;
 	
 	/**
@@ -37,7 +46,8 @@ public class Configuration {
 	 */
 	public final static void initialize() {
 		try {
-			app = new DCLApplication(new InetSocketAddress(InetAddress.getLocalHost(), 2000), Sblit.APPLICATION_IDENTIFIER);
+			Service service = new Service(DEFAULT_DCL_PORT);
+			app = new ApplicationInstanceBuilder(service).connect();
 		} catch (Exception e) {
 			JOptionPane.showMessageDialog(null, "DCL Service must be installed and running on your device!\nPlease start Sblit again after you made sure that DCL is running!\nDetailed Error: " + 
 						e.getMessage(), "DCL not running", JOptionPane.ERROR_MESSAGE);
@@ -78,7 +88,7 @@ public class Configuration {
 	 * @return
 	 * Returns the private address-key for this specific Host.
 	 */
-	public static PrivateKey getPrivateAddressKey(){
+	public static RSAPrivateKey getPrivateAddressKey(){
 		return privateAddressKey;
 	}
 	
@@ -88,7 +98,7 @@ public class Configuration {
 	 * @return
 	 * Returns the public address-key for this specific Host.
 	 */
-	public static PublicKey getPublicAddressKey(){
+	public static RSAPublicKey getPublicAddressKey(){
 		return publicAddressKey;
 	}
 	
@@ -107,15 +117,15 @@ public class Configuration {
 	 * @return
 	 * Returns the {@link DCLApplication}.
 	 */
-	public static DCLApplication getApp(){
+	public static ApplicationInstance getApp(){
 		return app;
 	}
 	/**
 	 * For other devices call getReceivers(String sender)!
 	 * @return
-	 * Returns OWN devices!
+	 * Returns OWN devices! (name->address)
 	 */
-	public static String[] getReceivers(){
+	public static HashMap<String,String> getReceiversAndNames(){
 		return receiverConfiguration.getReceivers();
 	}
 	/**
@@ -126,16 +136,57 @@ public class Configuration {
 		return keyConfiguration.getKey();
 	}
 	
-	protected static void addReceiver(String receiver){
-		receiverConfiguration.addReceiver(receiver);
+	protected static void addReceiver(String name, String address){
+		receiverConfiguration.addReceiver(name,address);
 	}
 	
 	protected static void setSblitDirectory(String directory){
 		dataDirectoryConfiguration.setDataDirectory(directory);
 	}
 	
-	protected void setSymmetricKey(byte[] key){
+	protected static void setSymmetricKey(byte[] key){
 		keyConfiguration.setKey(key);
 	}
+	@Deprecated
+	public static void addAuthenticatedReceiver(String receiver){
+		authenticatedReceivers.put(receiver, true);
+	}
+	@Deprecated
+	public static void removeAuthenticatedReceiver(String reveiver){
+		authenticatedReceivers.remove(reveiver);
+	}
+	@Deprecated
+	public static boolean checkAuthenticatedReceiver(String receiver){
+		return authenticatedReceivers.get(receiver);
+	}
+	/**
+	 * Returns the receivers address-keys
+	 * For name + address-key use getReceiversAndName()
+	 * @return
+	 */
+	public static Data[] getReceivers(){
+		Collection<String> receivers = receiverConfiguration.getReceivers().values();
+		Data[] result = new Data[receivers.size()];
+		int i = 0;
+		for(String receiver: receivers){
+			result[i] = new Data(receiver.getBytes());
+		}
+		return result;
+	}
 	
+	public static Set<Data> getChannels() {
+		return channels.keySet();
+	}
+	
+	public static void addChannel(Data receiverData,ApplicationChannel channel){
+		channels.put(receiverData, channel);
+	}
+	
+	public static void removeChannel(Data receiverData){
+		channels.remove(receiverData);
+	}
+	
+	public static ApplicationChannel getChannel(Data receiverData){
+		return channels.get(receiverData);
+	}
 }

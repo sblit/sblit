@@ -1,7 +1,7 @@
 package org.sblit.crypto;
 
 import java.security.KeyPair;
-
+@Deprecated
 public class AsymmetricEncryption {
 	
 	public static final int KEY_SIZE = 2048; //In bit
