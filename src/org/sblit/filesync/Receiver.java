@@ -1,14 +1,11 @@
 package org.sblit.filesync;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.dclayer.application.NetworkEndpointActionListener;
-import org.dclayer.application.applicationchannel.ApplicationChannel;
-import org.dclayer.application.applicationchannel.ApplicationChannelActionListener;
 import org.dclayer.application.networktypeslotmap.NetworkEndpointSlot;
 import org.dclayer.crypto.key.Key;
 import org.dclayer.exception.crypto.InvalidCipherCryptoException;
@@ -18,8 +15,6 @@ import org.dclayer.net.llacache.LLA;
 import org.sblit.Sblit;
 import org.sblit.configuration.Configuration;
 import org.sblit.converter.Converter;
-import org.sblit.crypto.SymmetricEncryption;
-import org.sblit.fileProcessing.FileProcessor;
 import org.sblit.fileProcessing.FileWriter;
 import org.sblit.filesync.exceptions.TimestampException;
 import org.sblit.filesync.requests.AuthenticyRequest;
@@ -36,11 +31,13 @@ import org.sblit.filesync.responses.FileResponse;
 
 public class Receiver implements NetworkEndpointActionListener {
 
+	
+	
 	public Receiver() {
-
+		
 	}
 
-	private void handleAuthenticyResponse(byte[] received, Data sourceAddressData) {
+	void handleAuthenticyResponse(byte[] received, Data sourceAddressData) {
 		for (AuthenticyRequest request : AuthenticyRequest.requests)
 			if (request.getReceiver().equals(sourceAddressData)
 					&& !request.getBytes().equals(received)) {
@@ -51,7 +48,7 @@ public class Receiver implements NetworkEndpointActionListener {
 			}
 	}
 
-	private void handleAuthenticyRequest(byte[] received, Data sender)
+	void handleAuthenticyRequest(byte[] received, Data sender)
 			throws InvalidCipherCryptoException {
 		byte[] decrypted = Configuration.getPrivateAddressKey().decrypt(new Data(received))
 				.getData();
@@ -62,7 +59,7 @@ public class Receiver implements NetworkEndpointActionListener {
 		}
 	}
 
-	private void handleFileResponse(byte[] received, Data sourceAddressData) throws IOException {
+	void handleFileResponse(byte[] received, Data sourceAddressData) throws IOException {
 		String data = new String(received);
 		if (Boolean.parseBoolean(data.split(",")[1])) {
 			try {
@@ -74,7 +71,7 @@ public class Receiver implements NetworkEndpointActionListener {
 		}
 	}
 
-	private void handleFileRequest(byte[] received, Data sourceAddressData) throws IOException {
+	void handleFileRequest(byte[] received, Data sourceAddressData) throws IOException {
 		String data = new String(received);
 		byte[] otherHashcode = data.split(",")[1].getBytes();
 		boolean need;
@@ -92,7 +89,7 @@ public class Receiver implements NetworkEndpointActionListener {
 
 	}
 
-	private void handleConflictResponse(byte[] received) throws IOException {
+	void handleConflictResponse(byte[] received) throws IOException {
 		String data = new String(received);
 		for (FileWriter fileWriter : FileWriter.fileWriters) {
 			if (fileWriter.getFile().equals(data.split(",")[1])) {
@@ -102,7 +99,7 @@ public class Receiver implements NetworkEndpointActionListener {
 		}
 	}
 
-	private void handleConflictRequest(byte[] received, Data sourceAddressData)
+	void handleConflictRequest(byte[] received, Data sourceAddressData)
 			throws BufException, IOException {
 		// boolean requestExists = false;
 
@@ -165,75 +162,7 @@ public class Receiver implements NetworkEndpointActionListener {
 		// DCLApplicationChannel channel = new DCLApplicationChannel(
 		// remotePublicKey, actionIdentifier, networkEndpointSlot);
 		if (Configuration.getReceiversAndNames().containsKey(remotePublicKey.toData())) {
-			return new ApplicationChannelActionListener() {
-
-				@Override
-				public void onApplicationChannelDisconnected(ApplicationChannel applicationChannel) {
-					try {
-						applicationChannel.getInputStream().close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					try {
-						applicationChannel.getOutputStream().close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					Configuration.removeChannel(applicationChannel.getRemotePublicKey().toData());
-
-				}
-
-				@Override
-				public void onApplicationChannelConnected(ApplicationChannel applicationChannel) {
-					Configuration.addUnauthorizedChannel(applicationChannel.getRemotePublicKey()
-							.toData(), applicationChannel);
-					new AuthenticyRequest(applicationChannel.getRemotePublicKey().toData());
-					while (true) {
-						try {
-							// TODO handle foreign files
-
-							BufferedInputStream stream = new BufferedInputStream(
-									applicationChannel.getInputStream());
-
-							byte[] received = new byte[stream.available()];
-							stream.read(received);
-							Data sourceAddressData = applicationChannel.getRemotePublicKey()
-									.toData();
-							String s = new String(received);
-							if (s.startsWith(PacketStarts.AUTHENTICY_REQUEST.toString())) {
-								handleAuthenticyRequest(received, sourceAddressData);
-							} else if (s.startsWith(PacketStarts.AUTHENTICY_RESPONSE.toString())) {
-								handleAuthenticyResponse(received, sourceAddressData);
-							}
-							received = new SymmetricEncryption(Configuration.getKey())
-									.decrypt(received);
-							if (Configuration.getChannels().contains(sourceAddressData)) {
-								if (s.startsWith(PacketStarts.CONFLICT_REQUEST.toString())) {
-									handleConflictRequest(received, sourceAddressData);
-								} else if (s.startsWith(PacketStarts.CONFLICT_RESPONSE.toString())) {
-									handleConflictResponse(received);
-								} else if (s.startsWith(PacketStarts.FILE_REQUEST.toString())) {
-									handleFileRequest(received, sourceAddressData);
-								} else if (s.startsWith(PacketStarts.FILE_RESPONSE.toString())) {
-									handleFileResponse(received, sourceAddressData);
-								} else {
-
-									// FileProcessor fileProcessor =
-									new FileProcessor(received);
-									// byte[] checksum = receive();
-								}
-							}
-						} catch (BufException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							e.printStackTrace();
-						} catch (InvalidCipherCryptoException e) {
-							e.printStackTrace();
-						}
-					}
-
-				}
-			};
+			return new ApplicationChannelActionListener(this);
 		} else {
 			return null;
 		}
