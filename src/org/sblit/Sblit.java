@@ -1,54 +1,60 @@
 package org.sblit;
 
-import org.dclayer.crypto.key.KeyPair;
-import org.dclayer.crypto.key.RSAKey;
-import org.dclayer.crypto.key.RSAPublicKey;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+
 import org.sblit.configuration.Configuration;
-import org.sblit.filesync.PacketStarts;
+import org.sblit.crypto.SymmetricEncryption;
+import org.sblit.directoryWatcher.DirectoryWatcher;
+import org.sblit.filesync.requests.FileRequest;
 
 /**
  * 
  * @author Nikola
- *
+ * 
  */
 public class Sblit {
-	
+
 	public static final String APPLICATION_IDENTIFIER = "org.sblit";
-	
+
 	public static void main(String[] args) {
-		for(int i = 0; i < 1000; i++){
-		KeyPair<RSAKey> keyPair = org.dclayer.crypto.Crypto.generateAddressRSAKeyPair();
-		RSAPublicKey pk = (RSAPublicKey) keyPair.getPublicKey();
-		pk.toData();
-		}
-		//new Sblit();
+		new Sblit();
 
+	}
+
+	public Sblit() {
+		Configuration.initialize();
+		System.out.println(new Configuration().toString());
+		String message = "Hello World";
+		SymmetricEncryption enc = new SymmetricEncryption(Configuration.getKey());
+		System.out.println(new String(enc.decrypt(enc.encrypt(message.getBytes()))));
+
+		// TODO Share public key
+
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				while (true) {
+					DirectoryWatcher directoryWatcher = new DirectoryWatcher(
+							Configuration.getSblitDirectory(),
+							new File(Configuration.getConfigurationDirectory().toString() + Configuration.LOG_FILE), new String(Configuration.getKey()));
+					for (File f : directoryWatcher.getFilesToPush()) {
+						try {
+							MessageDigest md = MessageDigest.getInstance("SHA");
+							md.update(Files.readAllBytes(Paths.get(f.getAbsolutePath())));
+							new FileRequest(md.digest()).send();
+						} catch (Exception e1) {
+							e1.printStackTrace();
+						}
+					}
+				}
+
+			}
+		}).run();
+	
 	}
 	
-	public Sblit() {
-		//TODO Check configuration
-		
-		Configuration.initialize();
-		System.out.println(Configuration.getSblitDirectory());
-		
-		//TODO Share public key
-		
-		//TODO Find the other Devices that belong to the same group
-		
-//		new Thread(new Runnable() {
-//			
-//			@Override
-//			public void run() {
-//				try {
-//					FileSender fileSender = new FileSender(null, null, configuration.getApp());
-//					DirectoryWatcher directoryWatcher = new DirectoryWatcher(new File("C:\\Users\\Nikola\\Documents"), new File("C:\\Users\\Nikola\\test.txt"), "1");
-//					fileSender.send(directoryWatcher.getFilesToPush(), directoryWatcher.getLogFile());
-//				} catch (IOException | BufException e) {
-//					
-//					e.printStackTrace();
-//				} 
-//			}
-//		}).run(); 
-	}
-
 }

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.math.BigInteger;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 
 import org.dclayer.crypto.key.KeyPair;
@@ -46,8 +47,10 @@ class AddressConfiguration {
 		try {
 			KeyPair<RSAKey> keyPair = getKeyPair(configurationDirectory);
 			privateKey = (RSAPrivateKey) keyPair.getPrivateKey();
+			System.out.println(privateKey);
 			publicKey = (RSAPublicKey) keyPair.getPublicKey();
 		} catch (Exception e) {
+			System.out.println("generiere neue adressen");
 			createNewAddresses(configurationDirectory, os);
 		}
 		
@@ -61,7 +64,7 @@ class AddressConfiguration {
 	 * The current operating system
 	 */
 	void createNewAddresses(File configurationDirectory, String os){
-		//TODO get addresses from DCLayer
+		// get addresses from DCLayer
 		//Creates the new directory for the configuration files 
 		configurationDirectory.mkdir();
 		try {
@@ -129,6 +132,10 @@ class AddressConfiguration {
 		
 	}
 	
+	KeyPair<RSAKey>getKeyPair(){
+		return KeyPair.fromKeys(publicKey, privateKey);
+	}
+	
 	/**
 	 * Returns the key-pair which was already configured and saved to the given directory.
 	 * @param configurationDirectory
@@ -140,9 +147,12 @@ class AddressConfiguration {
 	 * @throws IOException
 	 * If an error occurs while reading the file.
 	 */
-	private KeyPair<RSAKey> getKeyPair(File configurationDirectory) {
+	private KeyPair<RSAKey> getKeyPair(File configurationDirectory) throws NoSuchFileException {
 		File privateFile = new File(configurationDirectory + PRIVATE_FILE);
 		File publicFile = new File(configurationDirectory + PUBLIC_FILE);
+		
+		if(!privateFile.exists()||!publicFile.exists())
+			throw new NoSuchFileException(null);
 
 		String privateKeyString;
 		RSAPrivateKey privateKey = null;

@@ -7,7 +7,6 @@ import java.util.HashSet;
 
 import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.net.Data;
-import org.sblit.Sblit;
 import org.sblit.configuration.Configuration;
 import org.sblit.crypto.SymmetricEncryption;
 import org.sblit.filesync.Packet;
@@ -56,5 +55,9 @@ public class ConflictRequest implements Packet {
 
 	public String getOriginalFile() {
 		return originalFile;
+	}
+	
+	public String getNewFile(){
+		return newFile;
 	}
 }

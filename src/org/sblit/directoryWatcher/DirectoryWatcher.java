@@ -73,9 +73,7 @@ public class DirectoryWatcher {
 
 			for (@SuppressWarnings("rawtypes")
 			WatchEvent event : events) {
-				byte[] fileContent = Files.readAllBytes(Paths.get(event
-						.context().toString()));
-
+				byte[] fileContent = readFile(event);
 				// Überprüft, was mit dem File passiert ist
 				MessageDigest md = MessageDigest.getInstance("SHA");
 				md.update(fileContent);
@@ -110,12 +108,7 @@ public class DirectoryWatcher {
 
 			logFile.createNewFile();
 
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-					new FileOutputStream(logFile)));
-			bw.write(files.toString().replace("{", "").replace("}", ""));
-			bw.close();
-			System.out.println(files.toString().replace("{", "")
-					.replace("}", ""));
+			write(files);
 
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -124,8 +117,23 @@ public class DirectoryWatcher {
 		}
 
 	}
+	
+	private synchronized byte[] readFile(@SuppressWarnings("rawtypes") WatchEvent event) throws IOException {
 
-	public static HashMap<String, String> getLogFileContent(File logFile)
+		return Files.readAllBytes(Paths.get(event
+				.context().toString()));
+	}
+	
+	private synchronized void write(Map<String, String> files) throws IOException{
+		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+				new FileOutputStream(logFile)));
+		bw.write(files.toString().replace("{", "").replace("}", ""));
+		bw.close();
+		System.out.println(files.toString().replace("{", "")
+				.replace("}", ""));
+	}
+
+	public synchronized static HashMap<String, String> getLogFileContent(File logFile)
 			throws IOException {
 		Map<String, String> files = new HashMap<String, String>();
 		BufferedReader br = new BufferedReader(new InputStreamReader(

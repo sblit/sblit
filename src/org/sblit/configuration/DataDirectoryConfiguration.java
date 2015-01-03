@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 
 public class DataDirectoryConfiguration {
 	
-	public static final String DATA_DIRECTORY = "sblitDirectory.txt";
+	public static final String DATA_DIRECTORY = "/sblitDirectory.txt";
 	private File dir;
 	private File configurationFile;
 	

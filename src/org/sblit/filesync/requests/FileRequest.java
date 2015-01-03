@@ -13,10 +13,10 @@ import org.sblit.filesync.PacketStarts;
 
 public class FileRequest implements Packet {
 
-	int hashcode;
+	byte[] hashcode;
 	public static HashSet<FileRequest> fileRequests = new HashSet<>();
 
-	public FileRequest(int hashcode) {
+	public FileRequest(byte[] hashcode) {
 		fileRequests.add(this);
 		this.hashcode = hashcode;
 	}

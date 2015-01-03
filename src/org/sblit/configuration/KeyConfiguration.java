@@ -10,7 +10,7 @@ import org.sblit.crypto.SymmetricEncryption;
 
 public class KeyConfiguration {
 
-	public static final String KEY_CONFIGURATION_FILE = "symmetricKey.txt";
+	public static final String KEY_CONFIGURATION_FILE = "/symmetricKey.txt";
 	private String configurationFile;
 	private byte[] key;
 	private String os;
@@ -22,7 +22,6 @@ public class KeyConfiguration {
 			try {
 				key = Files.readAllBytes(Paths.get(configurationFile));
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		} else {

@@ -22,14 +22,12 @@ public class AsymmetricEncryption {
 	public byte[] encrypt(byte[] data) throws NullPointerException{
 		if(privateKey == null)
 			throw new NullPointerException();
-		//TODO asymmetric encryption
 		return null;
 	}
 	
 	public byte[] decrypt(byte[] data) throws NullPointerException {
 		if(publicKey == null)
 			throw new NullPointerException();
-		//TODO
 		return null;
 	}
 	

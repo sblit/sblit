@@ -23,7 +23,7 @@ import org.bouncycastle.crypto.params.KeyParameter;
 
 public class SymmetricEncryption {
 	
-	public static final int KEY_SIZE = 4096; //In bit
+	public static final int KEY_SIZE = 256; //In bit
 	
 	private CipherParameters key;
 	

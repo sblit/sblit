@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -11,7 +12,6 @@ import java.security.NoSuchAlgorithmException;
 import org.dclayer.application.ApplicationInstance;
 import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.net.Data;
-import org.sblit.Sblit;
 import org.sblit.configuration.Configuration;
 import org.sblit.crypto.SymmetricEncryption;
 
@@ -22,10 +22,10 @@ import org.sblit.crypto.SymmetricEncryption;
  */
 public class FileSender {
 
-	private File dataDirectory;
 	private String ownAddress;
-	private ApplicationInstance app;
+	//private ApplicationInstance app;
 	private byte[] password;
+	private Data receiver;
 
 	/**
 	 * With this FileSender you are able to send files to multiple receivers.
@@ -38,10 +38,23 @@ public class FileSender {
 	 * @param ownAddress
 	 *            Own address for identification in the cloud.
 	 */
-	public FileSender(byte[] password, ApplicationInstance app, String ownAddress) {
-		this.app = app;
+	@Deprecated
+	public FileSender(byte[] password, ApplicationInstance app,
+			String ownAddress) {
+		//this.app = app;
 		this.password = password;
 		this.ownAddress = ownAddress;
+	}
+
+	public FileSender(Data sourceAddressData) {
+		//app = Configuration.getApp();
+		password = Configuration.getKey();
+		ownAddress = Configuration.getPublicAddressKey().toString();
+		receiver = sourceAddressData;
+	}
+	
+	private synchronized byte[] getFileContent(Path path) throws IOException{
+		return Files.readAllBytes(path);
 	}
 
 	/**
@@ -58,16 +71,16 @@ public class FileSender {
 	 * @throws BufException
 	 *             If a problem while sending data occurs
 	 */
-	public void sendOwnFiles(File[] filesToPush,
-			File logFile) throws IOException, BufException {
+	public void sendOwnFiles(File[] filesToPush, File logFile)
+			throws IOException, BufException {
 		for (File f : filesToPush) {
 			byte[] ownAddress = this.ownAddress.getBytes();
-			byte[] logFileContent = Files.readAllBytes(Paths.get(logFile
+			byte[] logFileContent = getFileContent(Paths.get(logFile
 					.getAbsolutePath()));
-			byte[] fileContent = Files.readAllBytes(Paths.get(f
+			byte[] fileContent = getFileContent(Paths.get(f
 					.getAbsolutePath()));
 			byte[] filePath = f.getAbsolutePath()
-					.replaceAll(dataDirectory.getAbsolutePath(), "").getBytes();
+					.replaceAll(Configuration.getSblitDirectory().getAbsolutePath(), "").getBytes();
 			byte[] hash;
 			try {
 				MessageDigest md = MessageDigest.getInstance("SHA");
@@ -108,7 +121,7 @@ public class FileSender {
 
 				send(data);
 			} catch (NoSuchAlgorithmException e) {
-				hash = "".getBytes();
+				//hash = "".getBytes();
 				e.printStackTrace();
 			}
 
@@ -128,8 +141,8 @@ public class FileSender {
 	 * @throws BufException
 	 *             If sending the file fails.
 	 */
-	public void sendForeignFiles(File[] filesToPush)
-			throws IOException, BufException {
+	public void sendForeignFiles(File[] filesToPush) throws IOException,
+			BufException {
 		for (File f : filesToPush) {
 			byte[] data = Files.readAllBytes(Paths.get(f.getAbsolutePath()));
 			send(data);
@@ -147,22 +160,19 @@ public class FileSender {
 	 *             If sending fails
 	 */
 	private void send(byte[] data) throws IOException {
-		for (Data receiver : Configuration.getChannels()) {
-			System.out.println(receiver);
-			OutputStream out = Configuration.getChannel(receiver)
-					.getOutputStream();
-			out.write(data);
-			out.flush();
-//			app.send(data, Sblit.APPLICATION_IDENTIFIER, receiver);
-//			try {
-//				MessageDigest md = MessageDigest.getInstance("SHA");
-//				md.update(data);
-//				app.send(md.digest(), Sblit.APPLICATION_IDENTIFIER, receiver);
-//			} catch (NoSuchAlgorithmException e) {
-//				e.printStackTrace();
-//			}
+		System.out.println(receiver);
+		OutputStream out = Configuration.getChannel(receiver).getOutputStream();
+		out.write(data);
+		out.flush();
+		// app.send(data, Sblit.APPLICATION_IDENTIFIER, receiver);
+		// try {
+		// MessageDigest md = MessageDigest.getInstance("SHA");
+		// md.update(data);
+		// app.send(md.digest(), Sblit.APPLICATION_IDENTIFIER, receiver);
+		// } catch (NoSuchAlgorithmException e) {
+		// e.printStackTrace();
+		// }
 
-		}
 	}
 
 }

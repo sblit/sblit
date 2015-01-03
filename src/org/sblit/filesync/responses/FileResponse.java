@@ -13,10 +13,12 @@ public class FileResponse implements Packet {
 
 	boolean need;
 	byte[] hashcode;
+	Data sourceAddress;
 
-	public FileResponse(boolean need, byte[] hashcode) {
+	public FileResponse(boolean need, byte[] hashcode, Data sourceAddressData) {
 		this.need = need;
 		this.hashcode = hashcode;
+		sourceAddress = sourceAddressData;
 	}
 
 	@Override
@@ -24,12 +26,10 @@ public class FileResponse implements Packet {
 		byte[] message = new String(hashcode + "," + need).getBytes();
 		byte[] encryptedMessage = new SymmetricEncryption(
 				Configuration.getKey()).encrypt(message);
-		for (Data receiver : Configuration.getChannels()) {
-			OutputStream out = Configuration.getChannel(receiver)
-					.getOutputStream();
-			out.write(encryptedMessage);
-			out.flush();
+		OutputStream out = Configuration.getChannel(sourceAddress)
+				.getOutputStream();
+		out.write(encryptedMessage);
+		out.flush();
 
-		}
 	}
 }

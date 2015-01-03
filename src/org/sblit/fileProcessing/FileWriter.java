@@ -44,7 +44,7 @@ public class FileWriter {
 		}
 	}
 
-	private void writeLogFile(byte[] logFile) throws IOException {
+	private synchronized void writeLogFile(byte[] logFile) throws IOException {
 		File logs = new File(Configuration.getConfigurationDirectory()
 				+ Configuration.LOG_FILE);
 		Map<String, String> myLogFile = DirectoryWatcher
@@ -108,7 +108,7 @@ public class FileWriter {
 		}
 	}
 
-	private void apply(File logs, String[] files) throws IOException {
+	private synchronized void apply(File logs, String[] files) throws IOException {
 		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
 				new FileOutputStream(logs)));
 		bw.write(files.toString().replace("{", "").replace("}", ""));
@@ -137,7 +137,7 @@ public class FileWriter {
 		return path;
 	}
 
-	private void write() throws IOException {
+	private synchronized void write() throws IOException {
 		File f;
 		if (!conflict) {
 			f = new File(path);
