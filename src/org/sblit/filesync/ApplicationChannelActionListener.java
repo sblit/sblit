@@ -69,7 +69,6 @@ public class ApplicationChannelActionListener implements
 					} else if (s.startsWith(PacketStarts.FILE_RESPONSE.toString())) {
 						receiver.handleFileResponse(received, sourceAddressData);
 					} else {
-
 						// FileProcessor fileProcessor =
 						new FileProcessor(received);
 						// byte[] checksum = receive();

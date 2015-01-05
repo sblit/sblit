@@ -111,6 +111,7 @@ class AddressConfiguration {
 		//Writes the private key into the file
 		File privateFile = new File(configurationDirectory.getAbsolutePath() + PRIVATE_FILE);
 		try {
+			System.out.println(privateFile.getAbsolutePath());
 			privateFile.createNewFile();
 			BufferedWriter privateOut = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(privateFile)));
 			privateOut.write(privateKey.getExponent() + ";" + privateKey.getModulus());

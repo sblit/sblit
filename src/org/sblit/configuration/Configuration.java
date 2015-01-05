@@ -55,8 +55,9 @@ public class Configuration {
 		if (os.contains("Windows")) {
 			configurationDirectory = new File(System.getenv("APPDATA") + "/SBLIT/");
 		} else {
-			configurationDirectory = new File("~/.SBLIT/");
+			configurationDirectory = new File(".SBLIT/");
 		}
+		configurationDirectory.mkdir();
 		AddressConfiguration addressConfiguration = new AddressConfiguration(
 				configurationDirectory, os);
 		try {

@@ -30,8 +30,6 @@ import org.sblit.filesync.responses.FileResponse;
  */
 
 public class Receiver implements NetworkEndpointActionListener {
-
-	
 	
 	public Receiver() {
 		
@@ -143,8 +141,7 @@ public class Receiver implements NetworkEndpointActionListener {
 	public void onJoin(NetworkEndpointSlot networkEndpointSlot, Data ownAddressData) {
 		for (Data partner : Configuration.getReceivers()) {
 			Configuration.getApp().requestApplicationChannel(networkEndpointSlot,
-					Sblit.APPLICATION_IDENTIFIER, Converter.dataToKey(partner));
-
+					Sblit.APPLICATION_IDENTIFIER, Converter.dataToKey(partner), new ApplicationChannelActionListener(this));
 		}
 
 	}
@@ -158,9 +155,6 @@ public class Receiver implements NetworkEndpointActionListener {
 	public ApplicationChannelActionListener onApplicationChannelRequest(
 			NetworkEndpointSlot networkEndpointSlot, Key remotePublicKey, String actionIdentifier,
 			LLA remoteLLA) {
-		// TODO channelResponse(?)
-		// DCLApplicationChannel channel = new DCLApplicationChannel(
-		// remotePublicKey, actionIdentifier, networkEndpointSlot);
 		if (Configuration.getReceiversAndNames().containsKey(remotePublicKey.toData())) {
 			return new ApplicationChannelActionListener(this);
 		} else {
