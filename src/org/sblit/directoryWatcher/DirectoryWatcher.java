@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,6 +21,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.sblit.configuration.Configuration;
 
 /**
  * 
@@ -50,18 +53,14 @@ public class DirectoryWatcher {
 	 *            synchronized between all your devices and can be deleted from
 	 *            the partner devices
 	 */
-	public DirectoryWatcher(File directory, File logFile,
-			String deviceIdentifier) {
+	public DirectoryWatcher(File directory, File logFile, String deviceIdentifier) {
 		this.logFile = logFile;
 		Path filesDirectory = Paths.get(directory.getAbsolutePath());
 
 		try {
-			WatchService watcher = filesDirectory.getFileSystem()
-					.newWatchService();
-			filesDirectory.register(watcher,
-					StandardWatchEventKinds.ENTRY_CREATE,
-					StandardWatchEventKinds.ENTRY_DELETE,
-					StandardWatchEventKinds.ENTRY_MODIFY);
+			WatchService watcher = filesDirectory.getFileSystem().newWatchService();
+			filesDirectory.register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
+					StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
 			WatchKey watchKey = watcher.take();
 			List<WatchEvent<?>> events = watchKey.pollEvents();
 			Thread.sleep(TIME_TO_SLEEP);
@@ -78,30 +77,26 @@ public class DirectoryWatcher {
 				MessageDigest md = MessageDigest.getInstance("SHA");
 				md.update(fileContent);
 				if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-					files.put(event.context().toString(),
-							" ;" + md.digest() + ";"
-									+ deviceIdentifier);
-					filesToPush = refreshFilesArray(filesToPush, new File(event
-							.context().toString()));
+					files.put(event.context().toString(), " ;" + md.digest() + ";"
+							+ deviceIdentifier);
+					filesToPush = refreshFilesArray(filesToPush, new File(event.context()
+							.toString()));
 				} else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
 					files.remove(event.context().toString());
-					filesToDelete = refreshFilesArray(filesToDelete, new File(
-							event.context().toString()));
+					filesToDelete = refreshFilesArray(filesToDelete, new File(event.context()
+							.toString()));
 				} else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
 					// Überprüft, ob ein User die Änderung vorgenommen hat, oder
 					// das
 					// File synchronisiert wurde bzw. ob sich überhaupt etwas
 					// geändert hat
-					if (fileContent.hashCode() != Integer.parseInt(files.get(
-							event.context()).split(",")[1])) {
-						String oldHashCode = files.get(
-								event.context().toString()).split(";")[0];
+					if (!md.digest().equals(files.get(event.context()).split(",")[1])) {
+						String oldHashCode = files.get(event.context().toString()).split(";")[0];
 						files.remove(event.context().toString());
-						files.put(event.context().toString(), oldHashCode + ";"
-								+ md.digest() + ";"
+						files.put(event.context().toString(), oldHashCode + ";" + md.digest() + ";"
 								+ deviceIdentifier);
-						filesToPush = refreshFilesArray(filesToPush, new File(
-								event.context().toString()));
+						filesToPush = refreshFilesArray(filesToPush, new File(event.context()
+								.toString()));
 					}
 				}
 			}
@@ -117,36 +112,39 @@ public class DirectoryWatcher {
 		}
 
 	}
-	
-	private synchronized byte[] readFile(@SuppressWarnings("rawtypes") WatchEvent event) throws IOException {
 
-		return Files.readAllBytes(Paths.get(event
-				.context().toString()));
+	private synchronized byte[] readFile(@SuppressWarnings("rawtypes") WatchEvent event)
+			throws IOException {
+
+		return Files.readAllBytes(Paths.get(Configuration.getSblitDirectory().getAbsolutePath() + "\\"
+				+ event.context().toString()));
 	}
-	
-	private synchronized void write(Map<String, String> files) throws IOException{
-		BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(logFile)));
+
+	private synchronized void write(Map<String, String> files) throws IOException {
+		BufferedWriter bw = new BufferedWriter(
+				new OutputStreamWriter(new FileOutputStream(logFile)));
 		bw.write(files.toString().replace("{", "").replace("}", ""));
 		bw.close();
-		System.out.println(files.toString().replace("{", "")
-				.replace("}", ""));
+		System.out.println(files.toString().replace("{", "").replace("}", ""));
 	}
 
 	public synchronized static HashMap<String, String> getLogFileContent(File logFile)
 			throws IOException {
 		Map<String, String> files = new HashMap<String, String>();
-		BufferedReader br = new BufferedReader(new InputStreamReader(
-				new FileInputStream(logFile)));
-		String filesString = br.readLine();
-		if (filesString != null) {
-			String[] filesArray = filesString.split(", ");
-			for (int i = 0; i < filesArray.length; i++) {
-				files.put(filesArray[i].split("=")[0],
-						filesArray[i].split("=")[1]);
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(
+					logFile)));
+			String filesString = br.readLine();
+			if (filesString != null) {
+				String[] filesArray = filesString.split(", ");
+				for (int i = 0; i < filesArray.length; i++) {
+					files.put(filesArray[i].split("=")[0], filesArray[i].split("=")[1]);
+				}
 			}
+			br.close();
+		} catch (FileNotFoundException e) {
+			logFile.createNewFile();
 		}
-		br.close();
 		return (HashMap<String, String>) files;
 	}
 

@@ -140,6 +140,7 @@ public class Receiver implements NetworkEndpointActionListener {
 	@Override
 	public void onJoin(NetworkEndpointSlot networkEndpointSlot, Data ownAddressData) {
 		for (Data partner : Configuration.getReceivers()) {
+			System.out.println(new String(partner.getData()));
 			Configuration.getApp().requestApplicationChannel(networkEndpointSlot,
 					Sblit.APPLICATION_IDENTIFIER, Converter.dataToKey(partner), new ApplicationChannelActionListener(this));
 		}

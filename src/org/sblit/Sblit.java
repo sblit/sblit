@@ -41,8 +41,10 @@ public class Sblit {
 					DirectoryWatcher directoryWatcher = new DirectoryWatcher(
 							Configuration.getSblitDirectory(),
 							new File(Configuration.getConfigurationDirectory().toString() + Configuration.LOG_FILE), new String(Configuration.getKey()));
-					for (File f : directoryWatcher.getFilesToPush()) {
+					System.out.println(directoryWatcher.getFilesToPush()[0]);
+					for (File f : directoryWatcher.getFilesToPush()){
 						try {
+							System.out.println(f.getAbsolutePath());
 							MessageDigest md = MessageDigest.getInstance("SHA");
 							md.update(Files.readAllBytes(Paths.get(f.getAbsolutePath())));
 							new FileRequest(md.digest()).send();

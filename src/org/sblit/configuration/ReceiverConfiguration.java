@@ -32,7 +32,6 @@ public class ReceiverConfiguration {
 					this.receivers.put(temp[0], temp[1]);
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
 				System.out.println("Keine Receiver eingetragen!");
 			}
 		} else {
@@ -52,7 +51,6 @@ public class ReceiverConfiguration {
 					this.foreignReceivers.put(temp[0], temp[1]);
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
 				System.out.println("Keine fremden Receiver eingetragen!");
 			}
 		} else {
