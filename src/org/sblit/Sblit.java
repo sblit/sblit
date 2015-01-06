@@ -6,7 +6,6 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 
 import org.sblit.configuration.Configuration;
-import org.sblit.crypto.SymmetricEncryption;
 import org.sblit.directoryWatcher.DirectoryWatcher;
 import org.sblit.filesync.requests.FileRequest;
 
@@ -27,9 +26,7 @@ public class Sblit {
 	public Sblit() {
 		Configuration.initialize();
 		System.out.println(new Configuration().toString());
-		String message = "Hello World";
-		SymmetricEncryption enc = new SymmetricEncryption(Configuration.getKey());
-		System.out.println(new String(enc.decrypt(enc.encrypt(message.getBytes()))));
+		
 
 		// TODO Share public key
 
@@ -41,10 +38,15 @@ public class Sblit {
 					DirectoryWatcher directoryWatcher = new DirectoryWatcher(
 							Configuration.getSblitDirectory(),
 							new File(Configuration.getConfigurationDirectory().toString() + Configuration.LOG_FILE), new String(Configuration.getKey()));
-					System.out.println(directoryWatcher.getFilesToPush()[0]);
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					System.out.println(directoryWatcher.getFilesToPush().toString());
 					for (File f : directoryWatcher.getFilesToPush()){
+						System.out.println(f.getAbsolutePath());
 						try {
-							System.out.println(f.getAbsolutePath());
 							MessageDigest md = MessageDigest.getInstance("SHA");
 							md.update(Files.readAllBytes(Paths.get(f.getAbsolutePath())));
 							new FileRequest(md.digest()).send();

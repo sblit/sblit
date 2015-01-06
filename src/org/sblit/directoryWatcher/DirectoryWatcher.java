@@ -56,6 +56,7 @@ public class DirectoryWatcher {
 	public DirectoryWatcher(File directory, File logFile, String deviceIdentifier) {
 		this.logFile = logFile;
 		Path filesDirectory = Paths.get(directory.getAbsolutePath());
+		System.out.println("FilesDirectory: \"" + filesDirectory + "\"");
 
 		try {
 			WatchService watcher = filesDirectory.getFileSystem().newWatchService();
@@ -79,23 +80,25 @@ public class DirectoryWatcher {
 				if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
 					files.put(event.context().toString(), " ;" + md.digest() + ";"
 							+ deviceIdentifier);
-					filesToPush = refreshFilesArray(filesToPush, new File(event.context()
+					filesToPush = refreshFilesArray(filesToPush, new File(Configuration.getSblitDirectory() + Configuration.slash + event.context()
 							.toString()));
 				} else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
 					files.remove(event.context().toString());
-					filesToDelete = refreshFilesArray(filesToDelete, new File(event.context()
+					filesToDelete = refreshFilesArray(filesToDelete, new File(Configuration.getSblitDirectory() + Configuration.slash + event.context()
 							.toString()));
 				} else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
 					// Überprüft, ob ein User die Änderung vorgenommen hat, oder
 					// das
 					// File synchronisiert wurde bzw. ob sich überhaupt etwas
 					// geändert hat
-					if (!md.digest().equals(files.get(event.context()).split(",")[1])) {
+					System.out.println("Neuer Hash:" + new String(md.digest()));
+					System.out.println("Alter Hash: " + files.get(event.context().toString()).split(";")[1]);
+					if (!md.digest().equals(files.get(event.context().toString()).split(";")[1])) {
 						String oldHashCode = files.get(event.context().toString()).split(";")[0];
 						files.remove(event.context().toString());
 						files.put(event.context().toString(), oldHashCode + ";" + md.digest() + ";"
 								+ deviceIdentifier);
-						filesToPush = refreshFilesArray(filesToPush, new File(event.context()
+						filesToPush = refreshFilesArray(filesToPush, new File(Configuration.getSblitDirectory() + Configuration.slash + event.context()
 								.toString()));
 					}
 				}
@@ -116,7 +119,7 @@ public class DirectoryWatcher {
 	private synchronized byte[] readFile(@SuppressWarnings("rawtypes") WatchEvent event)
 			throws IOException {
 
-		return Files.readAllBytes(Paths.get(Configuration.getSblitDirectory().getAbsolutePath() + "\\"
+		return Files.readAllBytes(Paths.get(Configuration.getSblitDirectory().getAbsolutePath() + Configuration.slash
 				+ event.context().toString()));
 	}
 

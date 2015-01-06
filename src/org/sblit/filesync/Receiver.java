@@ -139,6 +139,7 @@ public class Receiver implements NetworkEndpointActionListener {
 
 	@Override
 	public void onJoin(NetworkEndpointSlot networkEndpointSlot, Data ownAddressData) {
+		System.out.println(String.format("joined: %s, local address: %s", networkEndpointSlot, ownAddressData));
 		for (Data partner : Configuration.getReceivers()) {
 			System.out.println(new String(partner.getData()));
 			Configuration.getApp().requestApplicationChannel(networkEndpointSlot,

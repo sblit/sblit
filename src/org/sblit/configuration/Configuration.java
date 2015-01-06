@@ -1,6 +1,7 @@
 package org.sblit.configuration;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
@@ -13,6 +14,7 @@ import org.dclayer.application.Service;
 import org.dclayer.application.applicationchannel.ApplicationChannel;
 import org.dclayer.crypto.key.RSAPrivateKey;
 import org.dclayer.crypto.key.RSAPublicKey;
+import org.dclayer.exception.crypto.InsufficientKeySizeException;
 import org.dclayer.net.Data;
 import org.sblit.filesync.Receiver;
 
@@ -40,6 +42,8 @@ public class Configuration {
 	private static KeyConfiguration keyConfiguration;
 	private static HashMap<Data, ApplicationChannel> channels = new HashMap<>();
 	private static HashMap<Data, ApplicationChannel> unauthorizedChannels = new HashMap<>();
+	
+	public static String slash;
 
 	// private String receivers;
 
@@ -54,8 +58,10 @@ public class Configuration {
 		System.out.println(os);
 		if (os.contains("Windows")) {
 			configurationDirectory = new File(System.getenv("APPDATA") + "/SBLIT/");
+			slash = "\\";
 		} else {
 			configurationDirectory = new File(".SBLIT/");
+			slash = "/";
 		}
 		configurationDirectory.mkdir();
 		AddressConfiguration addressConfiguration = new AddressConfiguration(
@@ -217,10 +223,18 @@ public class Configuration {
 	 */
 	public static Data[] getReceivers() {
 		Collection<String> receivers = receiverConfiguration.getReceivers().keySet();
+		
 		Data[] result = new Data[receivers.size()];
 		int i = 0;
 		for (String receiver : receivers) {
-			result[i] = new Data(receiver.getBytes());
+			try {
+				RSAPublicKey publicKey = new RSAPublicKey(new BigInteger(
+					receiver.split(";")[1]), new BigInteger(
+					receiver.split(";")[0]));
+				result[i] = publicKey.toData();
+			} catch (InsufficientKeySizeException e) {
+				e.printStackTrace();
+			}
 			i++;
 		}
 		return result;

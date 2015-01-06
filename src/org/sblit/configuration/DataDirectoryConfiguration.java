@@ -19,7 +19,7 @@ public class DataDirectoryConfiguration {
 		if(configurationFile.exists()){
 			try {
 				byte[] data = Files.readAllBytes(Paths.get(configurationDirectory + DATA_DIRECTORY));
-				dir = new File(new String(data));
+				dir = new File(new String(data).split("\n")[0]);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
