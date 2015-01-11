@@ -5,5 +5,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/dcl"/>
 	<classpathentry kind="lib" path="C:/Users/Nikola/Downloads/bcprov-ext-jdk15on-151.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Nikola/Downloads/bc-dcl-RSA.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Nikola/Downloads/javax-inject.jar/javax-inject.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

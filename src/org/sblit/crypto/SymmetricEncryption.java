@@ -36,7 +36,7 @@ public class SymmetricEncryption {
 		return process(decrypted, true);
 	}
 	
-	private byte[] process(byte[] data, boolean encryption){
+	private byte[] process(byte[] data, boolean encryption) throws DataLengthException {
 		BlockCipher cipher = new AESEngine();
 		BlockCipherPadding padding = new ZeroBytePadding();
 		BufferedBlockCipher bufferedCipher = new PaddedBufferedBlockCipher(cipher, padding);
@@ -46,7 +46,7 @@ public class SymmetricEncryption {
 		try {
 			bufferedCipher.doFinal(output, bytesProcessed);
 			return output;
-		} catch (DataLengthException | IllegalStateException
+		} catch (IllegalStateException
 				| InvalidCipherTextException e) {
 			e.printStackTrace();
 		}
