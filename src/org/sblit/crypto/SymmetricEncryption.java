@@ -27,14 +27,27 @@ public class SymmetricEncryption {
 	
 	private CipherParameters key;
 	
+	/**
+	 * Creates a new SymmetricEncryption with the specified key.
+	 * @param key
+	 * For en-/decryption
+	 */
 	public SymmetricEncryption(byte[] key) {
 		assert key.length == KEY_SIZE/8; //Convert bit to byte
 		this.key = new KeyParameter(key);
 	}
 	
+	/**
+	 * Encrypts the data with the key specified in the constructor.
+	 * @param decrypted
+	 * Plain data
+	 * @return
+	 * Encrypted data.
+	 */
 	public byte[] encrypt(byte[] decrypted){
 		return process(decrypted, true);
 	}
+	
 	
 	private byte[] process(byte[] data, boolean encryption) throws DataLengthException {
 		BlockCipher cipher = new AESEngine();
@@ -53,10 +66,23 @@ public class SymmetricEncryption {
 		return null;
 	}
 	
+	/**
+	 * Derypts the encrypted byte[] with the key specified in the constructor.
+	 * @param encrypted
+	 * The encrypted byte[]
+	 * @return
+	 * The derypted data.
+	 */
 	public byte[] decrypt(byte[] encrypted){
 		return process(encrypted, false);
 	}
 	
+	
+	/**
+	 * Creates a new key.
+	 * @return
+	 * Key.
+	 */
 	public static byte[] generateKey(){
 		SecureRandom secureRandom = new SecureRandom();
 		byte[] keyBytes = new byte[KEY_SIZE/8];
