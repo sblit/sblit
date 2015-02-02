@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 import org.dclayer.exception.net.buf.BufException;
+import org.dclayer.net.Data;
 import org.sblit.configuration.Configuration;
 import org.sblit.directoryWatcher.DirectoryWatcher;
 import org.sblit.filesync.requests.ConflictRequest;
@@ -97,13 +98,16 @@ public class FileWriter {
 						+ "(conflict " + i + ")"
 						+ path.substring(path.lastIndexOf('.'));
 			}
+			for (Data receiver:Configuration.getReceivers()) {
+				
 			try {
 				this.logs = logs;
 				this.files = files;
-				ConflictRequest request = new ConflictRequest(path, newPath);
+				ConflictRequest request = new ConflictRequest(path, newPath, receiver);
 				request.send();
 			} catch (BufException e) {
 				e.printStackTrace();
+			}
 			}
 		}
 	}

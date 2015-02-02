@@ -1,10 +1,6 @@
 package org.sblit.filesync.requests;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.util.HashSet;
 
 import org.dclayer.application.applicationchannel.ApplicationChannel;
@@ -12,6 +8,8 @@ import org.dclayer.crypto.challenge.Fixed128ByteCryptoChallenge;
 import org.dclayer.exception.crypto.CryptoException;
 import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.net.Data;
+import org.dclayer.net.buf.StreamByteBuf;
+import org.dclayer.net.component.DataComponent;
 import org.sblit.filesync.Packet;
 import org.sblit.filesync.PacketStarts;
 
@@ -33,10 +31,27 @@ public class AuthenticyRequest implements Packet {
 
 	@Override
 	public void send() throws BufException, IOException {
-		BufferedOutputStream out = applicationChannel
-				.getOutputStream();
-		out.write("Hallo Welt\n".getBytes());
-		out.flush();
+		Data data = new Data((PacketStarts.AUTHENTICY_REQUEST.toString() + "," + new String(challenge.makeChallengeData().getData())).getBytes());
+		
+		DataComponent dataComponent = new DataComponent();
+		dataComponent.setData(data);
+		
+		System.out.println(String.format("sending authenticy request: %s\ndata: %s", dataComponent.represent(true), new String(dataComponent.getData().getData())));
+		
+		StreamByteBuf streamByteBuf = new StreamByteBuf(applicationChannel.getOutputStream());
+		
+		try {
+			streamByteBuf.write(dataComponent);
+		} catch (BufException e) {
+			e.printStackTrace();
+		}
+	}
+//	public void send() throws BufException, IOException {
+//		BufferedOutputStream out = applicationChannel
+//				.getOutputStream();
+//		PrintWriter pw = new PrintWriter(out);
+//		out.write("Hello World");
+//		out.flush();
 //		Data data = challenge.makeChallengeData();
 //		try {
 //			System.out.println("schreiben...");
@@ -51,7 +66,7 @@ public class AuthenticyRequest implements Packet {
 //		} catch (Exception e) {
 //			e.printStackTrace();
 //		}
-	}
+//	}
 
 	public boolean check(Data encrypted) throws CryptoException {
 		return challenge.verifySolvedData(encrypted);

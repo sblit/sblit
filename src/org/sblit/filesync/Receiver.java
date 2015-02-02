@@ -6,7 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import org.dclayer.application.NetworkEndpointActionListener;
+import org.dclayer.application.applicationchannel.ApplicationChannel;
 import org.dclayer.application.networktypeslotmap.NetworkEndpointSlot;
+import org.dclayer.crypto.challenge.Fixed128ByteCryptoChallenge;
 import org.dclayer.crypto.key.Key;
 import org.dclayer.exception.crypto.CryptoException;
 import org.dclayer.exception.crypto.InvalidCipherCryptoException;
@@ -22,7 +24,7 @@ import org.sblit.filesync.exceptions.TimestampException;
 import org.sblit.filesync.requests.AuthenticyRequest;
 import org.sblit.filesync.requests.ConflictRequest;
 import org.sblit.filesync.requests.FileRequest;
-import org.sblit.filesync.responses.AuthenticyReponse;
+import org.sblit.filesync.responses.AuthenticyResponse;
 import org.sblit.filesync.responses.ConflictResponse;
 import org.sblit.filesync.responses.FileResponse;
 
@@ -41,6 +43,7 @@ public class Receiver implements NetworkEndpointActionListener {
 	void handleAuthenticyResponse(byte[] received, Data sourceAddressData) {
 		for (AuthenticyRequest request : AuthenticyRequest.requests)
 			try {
+				received = new String(received).split(",")[1].getBytes();
 				if (request.getReceiver().equals(sourceAddressData)
 						&& !request.check(new Data(received))) {
 					Configuration.denyChannel(sourceAddressData);
@@ -63,11 +66,20 @@ public class Receiver implements NetworkEndpointActionListener {
 			}
 	}
 
-	void handleAuthenticyRequest(byte[] received, Data sender) throws InvalidCipherCryptoException {
-		byte[] decrypted = Configuration.getPrivateAddressKey().decrypt(new Data(received))
-				.getData();
+	void handleAuthenticyRequest(byte[] received, ApplicationChannel applicationChannel) throws InvalidCipherCryptoException {
+
+		received = new String(received).split(",")[1].getBytes();
+		Fixed128ByteCryptoChallenge challenge = new Fixed128ByteCryptoChallenge(Configuration.getPrivateAddressKey());
+		
+		byte[] decrypted = null;
 		try {
-			new AuthenticyReponse(decrypted, sender).send();
+			decrypted = challenge.solveChallengeData(new Data(received)).getData();
+		} catch (CryptoException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		try {
+			new AuthenticyResponse(decrypted, applicationChannel).send();
 		} catch (BufException | IOException e) {
 			e.printStackTrace();
 		}
@@ -148,7 +160,7 @@ public class Receiver implements NetworkEndpointActionListener {
 			} catch (TimestampException e) {
 				e.printStackTrace();
 				System.out.println(e.getMessage());
-				new ConflictRequest(request.getOriginalFile(), request.getNewFile()).send();
+				new ConflictRequest(request.getOriginalFile(), request.getNewFile(), sourceAddressData).send();
 			}
 		}
 	}
@@ -158,7 +170,7 @@ public class Receiver implements NetworkEndpointActionListener {
 		System.out.println(String.format("joined: %s, local address: %s", networkEndpointSlot,
 				ownAddressData));
 		for (Data partner : Configuration.getReceivers()) {
-			System.out.println(new String(partner.getData()));
+			//System.out.println(new String(partner.getData()));
 			Configuration.getApp().requestApplicationChannel(networkEndpointSlot,
 					Sblit.APPLICATION_IDENTIFIER, Converter.dataToKey(partner),
 					new ApplicationChannelActionListener(this));
