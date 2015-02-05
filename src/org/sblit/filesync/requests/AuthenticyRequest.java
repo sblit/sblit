@@ -30,8 +30,10 @@ public class AuthenticyRequest implements Packet {
 	}
 
 	@Override
-	public void send() throws BufException, IOException {
+	public synchronized void send() throws BufException, IOException {
 		Data data = new Data((PacketStarts.AUTHENTICY_REQUEST.toString() + "," + new String(challenge.makeChallengeData().getData())).getBytes());
+		
+		//data = new Data("Hello World".getBytes());
 		
 		DataComponent dataComponent = new DataComponent();
 		dataComponent.setData(data);
@@ -39,12 +41,12 @@ public class AuthenticyRequest implements Packet {
 		System.out.println(String.format("sending authenticy request: %s\ndata: %s", dataComponent.represent(true), new String(dataComponent.getData().getData())));
 		
 		StreamByteBuf streamByteBuf = new StreamByteBuf(applicationChannel.getOutputStream());
-		
 		try {
 			streamByteBuf.write(dataComponent);
 		} catch (BufException e) {
 			e.printStackTrace();
 		}
+		applicationChannel.getOutputStream().flush();
 	}
 //	public void send() throws BufException, IOException {
 //		BufferedOutputStream out = applicationChannel

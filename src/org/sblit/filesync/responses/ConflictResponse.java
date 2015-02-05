@@ -1,10 +1,11 @@
 package org.sblit.filesync.responses;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.net.Data;
+import org.dclayer.net.buf.StreamByteBuf;
+import org.dclayer.net.component.DataComponent;
 import org.sblit.configuration.Configuration;
 import org.sblit.crypto.SymmetricEncryption;
 import org.sblit.filesync.Packet;
@@ -24,14 +25,24 @@ public class ConflictResponse implements Packet {
 	}
 
 	@Override
-	public void send() throws BufException, IOException {
+	public synchronized void send() throws BufException, IOException {
 		byte[] data = new String(PacketStarts.CONFLICT_RESPONSE.toString()
 				+ "," + originalFile + "," + accepted).getBytes();
-		byte[] encryptedData = new SymmetricEncryption(Configuration.getKey())
-				.encrypt(data);
-		OutputStream out = Configuration.getChannel(sourceAddress)
-				.getOutputStream();
-		out.write(encryptedData);
+		Data encryptedData = new Data(new SymmetricEncryption(Configuration.getKey())
+				.encrypt(data));
+		DataComponent dataComponent = new DataComponent();
+		dataComponent.setData(encryptedData);
+		
+		System.out.println(String.format("sending: %s", dataComponent.represent(true)));
+		
+		StreamByteBuf streamByteBuf = new StreamByteBuf(Configuration.getChannel(sourceAddress).getOutputStream());
+		
+		try {
+			streamByteBuf.write(dataComponent);
+		} catch (BufException e) {
+			e.printStackTrace();
+		}
+		Configuration.getChannel(sourceAddress).getOutputStream().flush();
 	}
 
 }

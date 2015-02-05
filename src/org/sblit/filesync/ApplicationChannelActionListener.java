@@ -26,26 +26,31 @@ public class ApplicationChannelActionListener implements
 
 	@Override
 	public void onApplicationChannelDisconnected(ApplicationChannel applicationChannel) {
-		try {
-			applicationChannel.getInputStream().close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		try {
-			applicationChannel.getOutputStream().close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		System.out.println("Disconnected: " + Configuration.getReceiversAndNames().get(applicationChannel.getRemotePublicKey()));
+//		try {
+//			applicationChannel.getInputStream().close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//		try {
+//			applicationChannel.getOutputStream().close();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 		Configuration.removeChannel(applicationChannel.getRemotePublicKey().toData());
 
 	}
 
 	@Override
 	public void onApplicationChannelConnected(ApplicationChannel applicationChannel) {
-
+		
 		this.applicationChannel = applicationChannel;
 		Runnable r = new Runnable() {
 
+			private synchronized void read(StreamByteBuf streamByteBuf, DataComponent dataComponent) throws ParseException, BufException{
+				dataComponent.read(streamByteBuf);
+			}
+			
 			@Override
 			public void run() {
 				DataComponent dataComponent = new DataComponent();
@@ -53,14 +58,25 @@ public class ApplicationChannelActionListener implements
 				InputStream inputStream = ApplicationChannelActionListener.this.applicationChannel
 						.getInputStream();
 				StreamByteBuf streamByteBuf = new StreamByteBuf(inputStream);
-
+				byte[] buf = new byte[0];
 				for (;;) {
+					byte[] received = new byte[0];
 					try {
-						dataComponent.read(streamByteBuf);
-						System.out.println(String.format("received: %s", new String(dataComponent
-								.getData().getData())));
+						read(streamByteBuf, dataComponent);
+						System.out.println(String.format("received: %s\nData component: %s", new String(dataComponent
+								.getData().getData()),dataComponent.represent()));
 						try {
-							byte[] received = dataComponent.getData().getData();
+							received = dataComponent.getData().getData();
+							if(buf.length > 0){
+								byte[] temp = new byte[buf.length + received.length];
+								for(int i = 0; i < buf.length; i++){
+									temp[i] = buf[i];
+								}
+								for(int i = 0; i < received.length;i++) {
+									temp[i+buf.length] = received[i];
+								}
+								received = temp;
+							}
 							Data sourceAddressData = ApplicationChannelActionListener.this.applicationChannel
 									.getRemotePublicKey().toData();
 							
@@ -99,7 +115,7 @@ public class ApplicationChannelActionListener implements
 					} catch (ParseException e) {
 						e.printStackTrace();
 					} catch (BufException e) {
-						e.printStackTrace();
+						buf = received;
 					}
 
 				}
@@ -109,13 +125,10 @@ public class ApplicationChannelActionListener implements
 		new Thread(r).start();
 		try {
 			new AuthenticyRequest(applicationChannel).send();
-		} catch (BufException e1) {
+		} catch (BufException | IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+		} 
 	}
 	// public void onApplicationChannelConnected(ApplicationChannel
 	// applicationChannel) {

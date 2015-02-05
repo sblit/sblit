@@ -23,7 +23,7 @@ public class FileRequest implements Packet {
 	}
 
 	@Override
-	public void send() throws BufException, IOException {
+	public synchronized void send() throws BufException, IOException {
 		byte[] data = new String(PacketStarts.FILE_REQUEST.toString() + ","
 				+ hashcode).getBytes();
 		Data encryptedData = new Data(new SymmetricEncryption(Configuration.getKey())
@@ -41,6 +41,7 @@ public class FileRequest implements Packet {
 			} catch (BufException e) {
 				e.printStackTrace();
 			}
+			Configuration.getChannel(receiver).getOutputStream().flush();
 		}
 	}
 

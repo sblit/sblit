@@ -38,7 +38,7 @@ public class ConflictRequest implements Packet {
 	}
 
 	@Override
-	public void send() throws BufException,IOException {
+	public synchronized void send() throws BufException,IOException {
 		byte[] data = new String(PacketStarts.CONFLICT_REQUEST + ","
 				+ originalFile + "," + newFile + "," + timestamp.getTime())
 				.getBytes();
@@ -50,12 +50,12 @@ public class ConflictRequest implements Packet {
 		System.out.println(String.format("sending: %s", dataComponent.represent(true)));
 		
 		StreamByteBuf streamByteBuf = new StreamByteBuf(Configuration.getChannel(receiver).getOutputStream());
-		
 		try {
 			streamByteBuf.write(dataComponent);
 		} catch (BufException e) {
 			e.printStackTrace();
 		}
+		Configuration.getChannel(receiver).getOutputStream().flush();
 	}
 
 	public long getTimestamp() {

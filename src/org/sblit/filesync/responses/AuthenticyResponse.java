@@ -7,6 +7,7 @@ import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.net.Data;
 import org.dclayer.net.buf.StreamByteBuf;
 import org.dclayer.net.component.DataComponent;
+import org.sblit.configuration.Configuration;
 import org.sblit.filesync.Packet;
 import org.sblit.filesync.PacketStarts;
 
@@ -21,7 +22,7 @@ public class AuthenticyResponse implements Packet{
 	}
 
 	@Override
-	public void send() throws BufException, IOException {
+	public synchronized void send() throws BufException, IOException {
 		DataComponent dataComponent = new DataComponent();
 		dataComponent.setData(new Data((PacketStarts.AUTHENTICY_RESPONSE.toString() + "," + new String(data)).getBytes()));
 		
@@ -35,6 +36,7 @@ public class AuthenticyResponse implements Packet{
 		} catch (BufException e) {
 			e.printStackTrace();
 		}
+		applicationChannel.getOutputStream().flush();
 	}
 
 }

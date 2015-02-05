@@ -1,10 +1,11 @@
 package org.sblit.filesync.responses;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.net.Data;
+import org.dclayer.net.buf.StreamByteBuf;
+import org.dclayer.net.component.DataComponent;
 import org.sblit.configuration.Configuration;
 import org.sblit.crypto.SymmetricEncryption;
 import org.sblit.filesync.Packet;
@@ -22,14 +23,22 @@ public class FileResponse implements Packet {
 	}
 
 	@Override
-	public void send() throws BufException, IOException {
+	public synchronized void send() throws BufException, IOException {
 		byte[] message = new String(hashcode + "," + need).getBytes();
-		byte[] encryptedMessage = new SymmetricEncryption(
-				Configuration.getKey()).encrypt(message);
-		OutputStream out = Configuration.getChannel(sourceAddress)
-				.getOutputStream();
-		out.write(encryptedMessage);
-		out.flush();
+		Data encryptedMessage = new Data(new SymmetricEncryption(
+				Configuration.getKey()).encrypt(message));
+		DataComponent dataComponent = new DataComponent();
+		dataComponent.setData(encryptedMessage);
+		
+		System.out.println(String.format("sending file response: %s\ndata: %s", dataComponent.represent(true), new String(dataComponent.getData().getData())));
+		
+		StreamByteBuf streamByteBuf = new StreamByteBuf(Configuration.getChannel(sourceAddress).getOutputStream());
+		
+		try {
+			streamByteBuf.write(dataComponent);
+		} catch (BufException e) {
+			e.printStackTrace();
+		}
 
 	}
 }
