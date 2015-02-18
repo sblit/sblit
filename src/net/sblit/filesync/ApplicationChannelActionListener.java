@@ -2,11 +2,13 @@ package net.sblit.filesync;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.Callable;
 
 import net.sblit.configuration.Configuration;
 import net.sblit.crypto.SymmetricEncryption;
 import net.sblit.fileProcessing.FileProcessor;
 import net.sblit.filesync.requests.AuthenticyRequest;
+import net.sblit.message.SblitMessage;
 
 import org.dclayer.application.applicationchannel.ApplicationChannel;
 import org.dclayer.exception.net.buf.BufException;
