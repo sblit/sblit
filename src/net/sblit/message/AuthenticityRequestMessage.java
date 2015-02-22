@@ -6,6 +6,6 @@ import org.dclayer.net.packetcomponent.ParentPacketComponent;
 
 public class AuthenticityRequestMessage extends ParentPacketComponent {
 	
-	@Child(index = 0) public DataComponent dataComponent;
+	@Child(index = 0) public DataComponent dataComponent = new DataComponent();
 	
 }

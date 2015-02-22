@@ -16,13 +16,15 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import net.sblit.configuration.Configuration;
+
+import org.dclayer.crypto.Crypto;
+import org.dclayer.net.Data;
 
 /**
  * 
@@ -39,7 +41,10 @@ public class DirectoryWatcher {
 	private File[] filesToPush;
 	private File[] filesToDelete;
 	private File logFile;
-
+	
+	public final static int INDEX_OLD_HASH = 0;
+	public final static int INDEX_CURRENT_HASH = 1;
+	
 	/**
 	 * 
 	 * @param directory
@@ -75,10 +80,9 @@ public class DirectoryWatcher {
 			WatchEvent event : events) {
 				byte[] fileContent = readFile(event);
 				// �berpr�ft, was mit dem File passiert ist
-				MessageDigest md = MessageDigest.getInstance("SHA");
-				md.update(fileContent);
+				Data hash = Crypto.sha1(new Data(fileContent));
 				if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-					files.put(event.context().toString(), " ;" + md.digest() + ";"
+					files.put(event.context().toString(), " ;" + hash + ";"
 							+ deviceIdentifier);
 					filesToPush = refreshFilesArray(filesToPush, new File(Configuration.getSblitDirectory() + Configuration.slash + event.context()
 							.toString()));
@@ -91,12 +95,23 @@ public class DirectoryWatcher {
 					// das
 					// File synchronisiert wurde bzw. ob sich �berhaupt etwas
 					// ge�ndert hat
-					System.out.println("Neuer Hash:" + new String(md.digest()));
-					System.out.println("Alter Hash: " + files.get(event.context().toString()).split(";")[1]);
-					if (!md.digest().equals(files.get(event.context().toString()).split(";")[1])) {
-						String oldHashCode = files.get(event.context().toString()).split(";")[0];
+					LinkedList<Data> hashes = new LinkedList<>();
+					for(String temp : files.get(event.context().toString()).split(";")[0].split(",")){
+						hashes.add(new Data(temp.getBytes()));
+					}
+					
+					System.out.println("Neuer Hash:" + hash.toString());
+					System.out.println("Alter Hash: " + hashes.get(hashes.size()-2));
+					
+					if (!hash.equals(hashes.get(hashes.size()-2))) {
 						files.remove(event.context().toString());
-						files.put(event.context().toString(), oldHashCode + ";" + md.digest() + ";"
+						
+						String temp = "";
+						for(Data hashData:hashes)
+							temp += "," + new String(hashData.getData());
+						temp = temp.substring(1);
+						
+						files.put(event.context().toString(), temp + ";"
 								+ deviceIdentifier);
 						filesToPush = refreshFilesArray(filesToPush, new File(Configuration.getSblitDirectory() + Configuration.slash + event.context()
 								.toString()));
@@ -110,9 +125,7 @@ public class DirectoryWatcher {
 
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		}
+		} 
 
 	}
 
@@ -130,7 +143,13 @@ public class DirectoryWatcher {
 		bw.close();
 		System.out.println(files.toString().replace("{", "").replace("}", ""));
 	}
-
+	@Deprecated
+	/**
+	 * use getLogs instead
+	 * @param logFile
+	 * @return
+	 * @throws IOException
+	 */
 	public synchronized static HashMap<String, String> getLogFileContent(File logFile)
 			throws IOException {
 		Map<String, String> files = new HashMap<String, String>();
@@ -149,6 +168,30 @@ public class DirectoryWatcher {
 			logFile.createNewFile();
 		}
 		return (HashMap<String, String>) files;
+	}
+	
+	public synchronized static HashMap<String, LinkedList<byte[]>> getLogs() throws IOException{
+		String[] logFileContent = new String(Files.readAllBytes(Paths.get(Configuration.getConfigurationDirectory().getAbsolutePath() + Configuration.LOG_FILE))).split(", ");
+		HashMap<String,LinkedList<byte[]>> result = new HashMap<>();
+		for(String line: logFileContent){
+			LinkedList<byte[]> hashes = new LinkedList<>();
+			for(String s : line.split("=")[1].split(";")[0].split(","))
+				hashes.add(s.getBytes());
+			result.put(line.split("=")[0], hashes );
+		}
+		return result;
+	}
+	
+	public synchronized static HashMap<String, LinkedList<byte[]>> getSynchronizedDevices() throws IOException {
+		String[] logFileContent = new String(Files.readAllBytes(Paths.get(Configuration.getConfigurationDirectory().getAbsolutePath() + Configuration.LOG_FILE))).split(", ");
+		HashMap<String,LinkedList<byte[]>> result = new HashMap<>();
+		for(String line: logFileContent){
+			LinkedList<byte[]> hashes = new LinkedList<>();
+			for(String s : line.split("=")[1].split(";")[1].split(","))
+				hashes.add(s.getBytes());
+			result.put(line.split("=")[0], hashes );
+		}
+		return result;
 	}
 
 	private File[] refreshFilesArray(File[] oldFileArray, File newFile) {

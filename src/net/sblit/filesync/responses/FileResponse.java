@@ -10,7 +10,7 @@ import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.net.Data;
 import org.dclayer.net.buf.StreamByteBuf;
 import org.dclayer.net.component.DataComponent;
-
+@Deprecated
 public class FileResponse implements Packet {
 
 	boolean need;
