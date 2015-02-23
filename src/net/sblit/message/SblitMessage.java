@@ -14,16 +14,16 @@ public class SblitMessage extends SwitchPacketComponent<CallbackMessage> {
 
 	//
 
-	public SblitMessage() {
-		super();
+	public SblitMessage(Object onReceiveObject) {
+		super(onReceiveObject);
 	}
 	
-	@Child(index = AUTHENTICITY_REQUEST) public AuthenticityRequestMessage authenticityRequest;
-	@Child(index = AUTHENTICITY_RESPONSE) public AuthenticityResponseMessage authenticityResponse;
+	@Child(index = AUTHENTICITY_REQUEST) public AuthenticityRequestMessage authenticityRequest = new AuthenticityRequestMessage();
+	@Child(index = AUTHENTICITY_RESPONSE) public AuthenticityResponseMessage authenticityResponse = new AuthenticityResponseMessage();
 	
-	@Child(index = FILE_REQUEST) public FileRequestMessage fileRequest;
-	@Child(index = FILE_RESPONSE) public FileResponseMessage fileResponse;
-	@Child(index = FILE_MESSAGE) public FileMessage fileMessage;
+	@Child(index = FILE_REQUEST) public FileRequestMessage fileRequest = new FileRequestMessage();
+	@Child(index = FILE_RESPONSE) public FileResponseMessage fileResponse = new FileResponseMessage();
+	@Child(index = FILE_MESSAGE) public FileMessage fileMessage = new FileMessage();
 	
 	// TODO add other messages as follows:
 	// @Child(index = REPLACE_ME_WITH_TYPE_ID) public WhatEverMessage whatEver;

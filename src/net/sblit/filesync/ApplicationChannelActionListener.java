@@ -9,6 +9,7 @@ import java.util.LinkedList;
 
 import net.sblit.configuration.Configuration;
 import net.sblit.directoryWatcher.DirectoryWatcher;
+import net.sblit.filesync.requests.AuthenticyRequest;
 import net.sblit.message.AuthenticityRequestMessage;
 import net.sblit.message.AuthenticityResponseMessage;
 import net.sblit.message.FileRequestMessage;
@@ -28,16 +29,12 @@ import org.dclayer.net.packetcomponent.OnReceive;
 public class ApplicationChannelActionListener implements
 		org.dclayer.application.applicationchannel.ApplicationChannelActionListener {
 
-	Receiver receiver;
 	protected ApplicationChannel applicationChannel;
-	protected SblitMessage message;
-	{
-		message.loadOnReceiveObject(this);
-	}
+	protected SblitMessage message = new SblitMessage(this);
+
 	private Fixed128ByteCryptoChallenge challenge;
 
-	public ApplicationChannelActionListener(Receiver receiver) {
-		this.receiver = receiver;
+	public ApplicationChannelActionListener() {
 	}
 
 	StreamByteBuf streamByteBuf;
@@ -73,12 +70,12 @@ public class ApplicationChannelActionListener implements
 
 			@Override
 			public void run() {
-				SblitMessage message = new SblitMessage();
 				InputStream in = ApplicationChannelActionListener.this.applicationChannel
 						.getInputStream();
 				while (true) {
 					try {
 						message.read(new StreamByteBuf(in));
+						System.out.println("Vor callOnReceive: " + message.authenticityRequest.dataComponent.getData().represent());
 						message.callOnReceive();
 					} catch (ParseException | BufException e) {
 						e.printStackTrace();
@@ -92,20 +89,23 @@ public class ApplicationChannelActionListener implements
 		challenge = new Fixed128ByteCryptoChallenge(applicationChannel.getRemotePublicKey());
 		message.authenticityRequest.dataComponent.setData(challenge.makeChallengeData());
 		try {
-			message.write(streamByteBuf);
+			streamByteBuf.write(message);
+			System.out.println("sending... " + message.toString());
 		} catch (BufException e) {
 			e.printStackTrace();
 			Configuration.denyChannel(applicationChannel.getRemotePublicKey().toData());
 		}
 	}
-
 	@OnReceive(index = SblitMessage.AUTHENTICITY_REQUEST)
 	public synchronized void handleAuthenticyRequest(AuthenticityRequestMessage authenticityRequest) {
+		System.out.println("In der OnReceive: \""
+				+ authenticityRequest.dataComponent.getData() + "\"");
 		Fixed128ByteCryptoChallenge challenge = new Fixed128ByteCryptoChallenge(
 				Configuration.getPrivateAddressKey());
 		try {
 			message.set(SblitMessage.AUTHENTICITY_RESPONSE);
 
+			
 			message.authenticityResponse.dataComponent.setData(challenge
 					.solveChallengeData(authenticityRequest.dataComponent.getData()));
 
@@ -118,12 +118,10 @@ public class ApplicationChannelActionListener implements
 	private synchronized void sendFileRequest(String path, LinkedList<byte[]> hashes) {
 		message.set(SblitMessage.FILE_REQUEST);
 
-		LinkedList<DataComponent> data = new LinkedList<>();
-		DataComponent dataComponent = new DataComponent();
+		LinkedList<Data> data = new LinkedList<>();
 
 		for (byte[] hash : hashes) {
-			dataComponent.setData(new Data(hash));
-			data.add(dataComponent);
+			data.add(new Data(hash));
 		}
 
 		message.fileRequest.path.setString(path);
@@ -172,8 +170,8 @@ public class ApplicationChannelActionListener implements
 	@OnReceive(index = SblitMessage.FILE_REQUEST)
 	public void handleFileRequest(FileRequestMessage fileRequest) throws IOException {
 		LinkedList<byte[]> requestedHashes = new LinkedList<>();
-		for (DataComponent dataComponent : fileRequest.hashes)
-			requestedHashes.add(dataComponent.getData().getData());
+		for (Data dataComponent : fileRequest.hashes)
+			requestedHashes.add(dataComponent.getData());
 
 		LinkedList<byte[]> ownHashes = DirectoryWatcher.getLogs().get(fileRequest.path.getString());
 
@@ -224,4 +222,5 @@ public class ApplicationChannelActionListener implements
 					fileResponse.path.getString(), new Data(log.get(log.size() - 1)));
 		}
 	}
+	
 }

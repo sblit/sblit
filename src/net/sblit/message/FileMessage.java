@@ -8,7 +8,7 @@ import org.dclayer.net.packetcomponent.ParentPacketComponent;
 
 public class FileMessage extends ParentPacketComponent {
 	
-	@Child(index = 0) public ArrayPacketComponent<DataComponent> synchronizedDevices = new ArrayPacketComponent<DataComponent>() {
+	@Child(index = 0, create = false) public ArrayPacketComponent<DataComponent> synchronizedDevices = new ArrayPacketComponent<DataComponent>() {
 
 		@Override
 		protected DataComponent newElementPacketComponent() {

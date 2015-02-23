@@ -30,7 +30,7 @@ public class Receiver implements NetworkEndpointActionListener {
 			//System.out.println(new String(partner.getData()));
 			Configuration.getApp().requestApplicationChannel(networkEndpointSlot,
 					Sblit.APPLICATION_IDENTIFIER, Converter.dataToKey(partner),
-					new ApplicationChannelActionListener(this));
+					new ApplicationChannelActionListener());
 		}
 
 	}
@@ -45,7 +45,7 @@ public class Receiver implements NetworkEndpointActionListener {
 			NetworkEndpointSlot networkEndpointSlot, Key remotePublicKey, String actionIdentifier,
 			LLA remoteLLA) {
 		if (Configuration.getReceiversAndNames().containsKey(remotePublicKey.toData())) {
-			return new ApplicationChannelActionListener(this);
+			return new ApplicationChannelActionListener();
 		} else {
 			return null;
 		}
