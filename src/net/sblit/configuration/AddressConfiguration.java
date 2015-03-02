@@ -69,7 +69,6 @@ class AddressConfiguration {
 		configurationDirectory.mkdir();
 		try {
 			//Generates a new keypair
-			@SuppressWarnings("unchecked")
 			KeyPair<RSAKey> keyPair = org.dclayer.crypto.Crypto.generateAddressRSAKeyPair();
 			
 			saveKeyPair(keyPair, configurationDirectory, os);

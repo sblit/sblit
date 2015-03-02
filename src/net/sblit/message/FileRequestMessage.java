@@ -9,7 +9,7 @@ import org.dclayer.net.packetcomponent.ParentPacketComponent;
 
 public class FileRequestMessage extends ParentPacketComponent {
 	
-	@Child(index = 0) public StringComponent path = new StringComponent();
+	@Child(index = 0) public StringComponent path;
 	@Child(index = 1, create = false) public ArrayPacketComponent<Data> hashes = new ArrayPacketComponent<Data>() {
 
 		@Override

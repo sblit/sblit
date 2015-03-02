@@ -2,7 +2,6 @@ package net.sblit.filesync.responses;
 
 import java.io.IOException;
 
-import net.sblit.configuration.Configuration;
 import net.sblit.filesync.Packet;
 import net.sblit.filesync.PacketStarts;
 

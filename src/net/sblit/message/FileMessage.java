@@ -1,5 +1,7 @@
 package net.sblit.message;
 
+import org.dclayer.crypto.hash.HashAlgorithm;
+import org.dclayer.net.Data;
 import org.dclayer.net.component.ArrayPacketComponent;
 import org.dclayer.net.component.DataComponent;
 import org.dclayer.net.component.StringComponent;
@@ -15,8 +17,14 @@ public class FileMessage extends ParentPacketComponent {
 			return new DataComponent();
 		}
 	};
-	@Child(index = 1) public DataComponent fileContent = new DataComponent();
-	@Child(index = 2) public StringComponent filePath = new StringComponent();
-	@Child(index = 3) public DataComponent hash = new DataComponent();
+	@Child(index = 1) public DataComponent fileContent;
+	@Child(index = 2) public StringComponent filePath;
+	@Child(index = 3, create = false) public ArrayPacketComponent<Data> hashes = new ArrayPacketComponent<Data>() {
+
+		@Override
+		protected Data newElementPacketComponent() {
+			return new Data(HashAlgorithm.SHA1.getDigestNumBytes());
+		}
+	};
 	
 }

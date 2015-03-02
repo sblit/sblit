@@ -1,13 +1,16 @@
 package net.sblit;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.MessageDigest;
+import java.io.IOException;
+import java.util.LinkedList;
 
 import net.sblit.configuration.Configuration;
 import net.sblit.directoryWatcher.DirectoryWatcher;
-import net.sblit.filesync.requests.FileRequest;
+import net.sblit.message.SblitMessage;
+
+import org.dclayer.exception.net.buf.BufException;
+import org.dclayer.net.Data;
+import org.dclayer.net.buf.StreamByteBuf;
 
 /**
  * 
@@ -34,6 +37,7 @@ public class Sblit {
 
 			@Override
 			public void run() {
+				SblitMessage message = new SblitMessage();
 				while (true) {
 					DirectoryWatcher directoryWatcher = new DirectoryWatcher(
 							Configuration.getSblitDirectory(),
@@ -43,15 +47,31 @@ public class Sblit {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					System.out.println(directoryWatcher.getFilesToPush().toString());
 					for (File f : directoryWatcher.getFilesToPush()){
 						System.out.println(f.getAbsolutePath());
+						String path = f.getAbsolutePath().replace(
+								Configuration.getSblitDirectory().getAbsolutePath(), "").substring(1);
+						LinkedList<Data> hashes;
 						try {
-							MessageDigest md = MessageDigest.getInstance("SHA");
-							md.update(Files.readAllBytes(Paths.get(f.getAbsolutePath())));
-							new FileRequest(md.digest()).send();
-						} catch (Exception e1) {
-							e1.printStackTrace();
+							System.out.println(path);
+							hashes = DirectoryWatcher.getLogs().get(path);
+							System.out.println(hashes);
+							for (Data channel : Configuration.getChannels()) {
+								message.set(SblitMessage.FILE_REQUEST);
+								message.fileRequest.path.setString(path);
+								//TODO not null
+								message.fileRequest.hashes.setElements(hashes);
+								try {
+									new StreamByteBuf(
+											Configuration.getChannel(channel).
+											getOutputStream()).
+											write(message);
+								} catch (BufException e) {
+									e.printStackTrace();
+								};
+							}
+						} catch (IOException e) {
+							e.printStackTrace();
 						}
 					}
 				}

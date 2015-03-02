@@ -12,7 +12,7 @@ public class FileProcessor {
 	private byte[] password;
 	private String[] myDevices;
 	private File configurationDirectory;
-
+	@Deprecated
 	public FileProcessor(byte[] received) {
 		configurationDirectory = Configuration.getConfigurationDirectory();
 		String sender = new String(received).split('\0' + "")[0];

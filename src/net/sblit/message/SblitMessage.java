@@ -18,6 +18,10 @@ public class SblitMessage extends SwitchPacketComponent<CallbackMessage> {
 		super(onReceiveObject);
 	}
 	
+	public SblitMessage(){
+		super();
+	}
+	
 	@Child(index = AUTHENTICITY_REQUEST) public AuthenticityRequestMessage authenticityRequest = new AuthenticityRequestMessage();
 	@Child(index = AUTHENTICITY_RESPONSE) public AuthenticityResponseMessage authenticityResponse = new AuthenticityResponseMessage();
 	

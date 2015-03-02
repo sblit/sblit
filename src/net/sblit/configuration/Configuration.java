@@ -269,11 +269,13 @@ public class Configuration {
 	}
 
 	public static void allowChannel(Data receiverData) {
+		System.out.println("authenticated: " + receiverData.represent());
 		channels.put(receiverData, unauthorizedChannels.get(receiverData));
 		unauthorizedChannels.remove(receiverData);
 	}
 
 	public static void denyChannel(Data receiverData) {
+		System.out.println("denied: " + receiverData.represent());
 		unauthorizedChannels.remove(receiverData);
 	}
 

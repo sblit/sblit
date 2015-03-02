@@ -1,15 +1,13 @@
 package net.sblit.directoryWatcher;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardWatchEventKinds;
@@ -41,10 +39,10 @@ public class DirectoryWatcher {
 	private File[] filesToPush;
 	private File[] filesToDelete;
 	private File logFile;
-	
+
 	public final static int INDEX_OLD_HASH = 0;
 	public final static int INDEX_CURRENT_HASH = 1;
-	
+
 	/**
 	 * 
 	 * @param directory
@@ -71,7 +69,8 @@ public class DirectoryWatcher {
 			List<WatchEvent<?>> events = watchKey.pollEvents();
 			Thread.sleep(TIME_TO_SLEEP);
 
-			Map<String, String> files = getLogFileContent(logFile);
+			Map<String, LinkedList<Data>> files = getLogs();
+			Map<String, LinkedList<Data>> synchronizedDevices = getSynchronizedDevices();
 
 			filesToPush = new File[0];
 			filesToDelete = new File[0];
@@ -82,67 +81,80 @@ public class DirectoryWatcher {
 				// �berpr�ft, was mit dem File passiert ist
 				Data hash = Crypto.sha1(new Data(fileContent));
 				if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-					files.put(event.context().toString(), " ;" + hash + ";"
-							+ deviceIdentifier);
-					filesToPush = refreshFilesArray(filesToPush, new File(Configuration.getSblitDirectory() + Configuration.slash + event.context()
-							.toString()));
+					LinkedList<Data> hashes = new LinkedList<>();
+					hashes.add(hash);
+					files.put(event.context().toString(), hashes);
+					LinkedList<Data> synchronizedDevice = new LinkedList<>();
+					synchronizedDevice.add(Configuration.getPublicAddressKey().toData());
+					synchronizedDevices.put(event.context().toString(), synchronizedDevice);
+					filesToPush = refreshFilesArray(filesToPush,
+							new File(Configuration.getSblitDirectory() + Configuration.slash
+									+ event.context().toString()));
 				} else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
 					files.remove(event.context().toString());
-					filesToDelete = refreshFilesArray(filesToDelete, new File(Configuration.getSblitDirectory() + Configuration.slash + event.context()
-							.toString()));
+					filesToDelete = refreshFilesArray(filesToDelete,
+							new File(Configuration.getSblitDirectory() + Configuration.slash
+									+ event.context().toString()));
 				} else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-					// �berpr�ft, ob ein User die �nderung vorgenommen hat, oder
+					// �berpr�ft, ob ein User die �nderung vorgenommen
+					// hat, oder
 					// das
 					// File synchronisiert wurde bzw. ob sich �berhaupt etwas
 					// ge�ndert hat
-					LinkedList<Data> hashes = new LinkedList<>();
-					for(String temp : files.get(event.context().toString()).split(";")[0].split(",")){
-						hashes.add(new Data(temp.getBytes()));
+					LinkedList<Data> hashes = files.get(event.context().toString());
+					if (hashes.contains(hash)) {
+						// File was edited by sblit
+
+					} else {
+						hashes.add(hash);
+						filesToPush = refreshFilesArray(filesToPush,
+								new File(Configuration.getSblitDirectory() + Configuration.slash
+										+ event.context().toString()));
+						LinkedList<Data> synchronizedDevice = new LinkedList<>();
+						synchronizedDevice.add(Configuration.getPublicAddressKey().toData());
+						synchronizedDevices.put(event.context().toString(), synchronizedDevice);
 					}
-					
+
 					System.out.println("Neuer Hash:" + hash.toString());
-					System.out.println("Alter Hash: " + hashes.get(hashes.size()-2));
-					
-					if (!hash.equals(hashes.get(hashes.size()-2))) {
-						files.remove(event.context().toString());
-						
-						String temp = "";
-						for(Data hashData:hashes)
-							temp += "," + new String(hashData.getData());
-						temp = temp.substring(1);
-						
-						files.put(event.context().toString(), temp + ";"
-								+ deviceIdentifier);
-						filesToPush = refreshFilesArray(filesToPush, new File(Configuration.getSblitDirectory() + Configuration.slash + event.context()
-								.toString()));
-					}
 				}
+				System.out.println(event.context().toString());
 			}
 
 			logFile.createNewFile();
-
-			write(files);
+			write(files, synchronizedDevices);
 
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
-		} 
+		}
 
 	}
 
 	private synchronized byte[] readFile(@SuppressWarnings("rawtypes") WatchEvent event)
 			throws IOException {
 
-		return Files.readAllBytes(Paths.get(Configuration.getSblitDirectory().getAbsolutePath() + Configuration.slash
-				+ event.context().toString()));
+		return Files.readAllBytes(Paths.get(Configuration.getSblitDirectory().getAbsolutePath()
+				+ Configuration.slash + event.context().toString()));
 	}
 
-	private synchronized void write(Map<String, String> files) throws IOException {
-		BufferedWriter bw = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(logFile)));
-		bw.write(files.toString().replace("{", "").replace("}", ""));
-		bw.close();
-		System.out.println(files.toString().replace("{", "").replace("}", ""));
+	private synchronized void write(Map<String, LinkedList<Data>> files,Map<String, LinkedList<Data>> synchronizedDevices) throws IOException {
+		String s = "";
+		for(String path:files.keySet()){
+			s += ", " + path + "=";
+			String temp = "";
+			for(Data data : files.get(path)){
+				temp += "," + data.represent();
+			}
+			s += temp.substring(1) + ";";
+			temp = "";
+			for(Data data : synchronizedDevices.get(path)){
+				temp += "," + data.represent();
+			}
+			s += temp.substring(1);
+		}
+		s = s.substring(2);
+		Files.write(logFile.toPath(), s.getBytes());
 	}
+
 	@Deprecated
 	/**
 	 * use getLogs instead
@@ -169,27 +181,54 @@ public class DirectoryWatcher {
 		}
 		return (HashMap<String, String>) files;
 	}
-	
-	public synchronized static HashMap<String, LinkedList<byte[]>> getLogs() throws IOException{
-		String[] logFileContent = new String(Files.readAllBytes(Paths.get(Configuration.getConfigurationDirectory().getAbsolutePath() + Configuration.LOG_FILE))).split(", ");
-		HashMap<String,LinkedList<byte[]>> result = new HashMap<>();
-		for(String line: logFileContent){
-			LinkedList<byte[]> hashes = new LinkedList<>();
-			for(String s : line.split("=")[1].split(";")[0].split(","))
-				hashes.add(s.getBytes());
-			result.put(line.split("=")[0], hashes );
+
+	public synchronized static HashMap<String, LinkedList<Data>> getLogs() throws IOException {
+
+		HashMap<String, LinkedList<Data>> result = new HashMap<>();
+		File logFile = new File(Configuration.getConfigurationDirectory().getAbsolutePath()
+				+ Configuration.LOG_FILE);
+
+		if (logFile.exists()) {
+			String[] logFileContent = new String(Files.readAllBytes(logFile.toPath())).split(", ");
+			for (String line : logFileContent) {
+				if(line.trim().equals(""))
+					break;
+				LinkedList<Data> hashes = new LinkedList<>();
+				for (String s : line.split("=")[1].split(";")[0].split(",")) {
+					Data temp = new Data();
+					temp.parse(s);
+					hashes.add(temp);
+				}
+
+				result.put(line.split("=")[0], hashes);
+			}
 		}
+
 		return result;
 	}
-	
-	public synchronized static HashMap<String, LinkedList<byte[]>> getSynchronizedDevices() throws IOException {
-		String[] logFileContent = new String(Files.readAllBytes(Paths.get(Configuration.getConfigurationDirectory().getAbsolutePath() + Configuration.LOG_FILE))).split(", ");
-		HashMap<String,LinkedList<byte[]>> result = new HashMap<>();
-		for(String line: logFileContent){
-			LinkedList<byte[]> hashes = new LinkedList<>();
-			for(String s : line.split("=")[1].split(";")[1].split(","))
-				hashes.add(s.getBytes());
-			result.put(line.split("=")[0], hashes );
+
+	public synchronized static HashMap<String, LinkedList<Data>> getSynchronizedDevices()
+			throws IOException {
+		HashMap<String, LinkedList<Data>> result = new HashMap<>();
+		File logFile = new File(Configuration.getConfigurationDirectory().getAbsolutePath()
+				+ Configuration.LOG_FILE);
+		try {
+			if (logFile.exists()) {
+				String[] logFileContent = new String(Files.readAllBytes(logFile.toPath()))
+						.split(", ");
+				for (String line : logFileContent) {
+					if(line.trim().equals("")) break;
+					LinkedList<Data> hashes = new LinkedList<>();
+					for (String s : line.split("=")[1].split(";")[1].split(",")) {
+						Data temp = new Data();
+						temp.parse(s);
+						hashes.add(temp);
+					}
+					result.put(line.split("=")[0], hashes);
+				}
+			}
+		} catch (NoSuchFileException e) {
+
 		}
 		return result;
 	}
