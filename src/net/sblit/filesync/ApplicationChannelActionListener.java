@@ -13,6 +13,7 @@ import net.sblit.directoryWatcher.DirectoryWatcher;
 import net.sblit.fileProcessing.FileWriter;
 import net.sblit.message.AuthenticityRequestMessage;
 import net.sblit.message.AuthenticityResponseMessage;
+import net.sblit.message.FileDeleteMessage;
 import net.sblit.message.FileMessage;
 import net.sblit.message.FileRequestMessage;
 import net.sblit.message.FileResponseMessage;
@@ -63,7 +64,7 @@ public class ApplicationChannelActionListener implements
 
 	@Override
 	public void onApplicationChannelConnected(ApplicationChannel applicationChannel) {
-
+		
 		this.applicationChannel = applicationChannel;
 		Configuration.addUnauthorizedChannel(applicationChannel.getRemotePublicKey().toData(), applicationChannel);
 
@@ -100,6 +101,7 @@ public class ApplicationChannelActionListener implements
 			Configuration.denyChannel(applicationChannel.getRemotePublicKey().toData());
 		}
 	}
+	
 	@OnReceive(index = SblitMessage.AUTHENTICITY_REQUEST)
 	public synchronized void handleAuthenticyRequest(AuthenticityRequestMessage authenticityRequest) {
 		System.out.println("In der OnReceive: \""
@@ -171,6 +173,7 @@ public class ApplicationChannelActionListener implements
 
 	@OnReceive(index = SblitMessage.FILE_REQUEST)
 	public void handleFileRequest(FileRequestMessage fileRequest) throws IOException {
+		System.out.println("received file request");
 		LinkedList<Data> requestedHashes = new LinkedList<>();
 		for (Data dataComponent : fileRequest.hashes)
 			requestedHashes.add(dataComponent);
@@ -178,6 +181,7 @@ public class ApplicationChannelActionListener implements
 		LinkedList<Data> ownHashes = DirectoryWatcher.getLogs().get(fileRequest.path.getString());
 
 		Data need;
+		try{
 		if (ownHashes.get(ownHashes.size() - 1).equals(
 				requestedHashes.get(requestedHashes.size() - 1))) {
 			need = new Data(new byte[] { 0x00 });
@@ -189,23 +193,25 @@ public class ApplicationChannelActionListener implements
 				File conflictFile;
 				if(dotIndex > path.lastIndexOf(Configuration.slash)){
 					for(int i = 1;; i++){
-						if(!new File(Configuration.getSblitDirectory() + path.substring(0,dotIndex-1) + "(Conflict " + i + ")" + path.substring(dotIndex)).exists()){
-							conflictFile = new File(Configuration.getSblitDirectory() + path.substring(0,dotIndex-1) + "(Conflict " + i + ")" + path.substring(dotIndex));
+						if(!new File(Configuration.getSblitDirectory() + Configuration.slash + path.substring(0,dotIndex) + "(Conflict " + i + ")" + path.substring(dotIndex)).exists()){
+							conflictFile = new File(Configuration.getSblitDirectory() + Configuration.slash + path.substring(0,dotIndex) + "(Conflict " + i + ")" + path.substring(dotIndex));
 							break;
 						}
 					}
 				} else {
 					for(int i = 1;; i++){
-						if(!new File(Configuration.getSblitDirectory() + path + "(Conflict " + i + ")" ).exists()){
-							conflictFile = new File(Configuration.getSblitDirectory() + path + "(Conflict " + i + ")" );
+						if(!new File(Configuration.getSblitDirectory() + Configuration.slash +  path + "(Conflict " + i + ")" ).exists()){
+							conflictFile = new File(Configuration.getSblitDirectory() + Configuration.slash + path + "(Conflict " + i + ")" );
 							break;
 						}
 					}
 				}
-				File file = new File(path);
-				conflictFile.createNewFile();
+				File file = new File(Configuration.getSblitDirectory() + Configuration.slash + path);
 				Files.copy(file.toPath(), conflictFile.toPath());
 			}
+		}
+		} catch (NullPointerException e){
+			need = new Data(new byte[] { 0x01 });
 		}
 		Data newHash = requestedHashes.get(requestedHashes.size() - 1);
 		try {
@@ -237,21 +243,37 @@ public class ApplicationChannelActionListener implements
 
 	@OnReceive(index = SblitMessage.FILE_RESPONSE)
 	public void handleFileResponse(FileResponseMessage fileResponse) throws IOException {
+		System.out.println("received file response");
 		if (fileResponse.need.getData().getData()[0] == 0x01) {
 			LinkedList<Data> log = DirectoryWatcher.getLogs().get(fileResponse.path.getString());
 			LinkedList<Data> logs = new LinkedList<>();
 			for(Data temp: log)
 				logs.add(temp);
 			sendFile(DirectoryWatcher.getSynchronizedDevices().get(fileResponse.path.getString()),
-					new Data(Files.readAllBytes(Paths.get(fileResponse.path.getString()))),
+					new Data(Files.readAllBytes(Paths.get(Configuration.getSblitDirectory() + Configuration.slash + fileResponse.path.getString()))),
 					fileResponse.path.getString(), logs);
 		}
 	}
 	
 	@OnReceive(index = SblitMessage.FILE_MESSAGE) 
 	public void handleFileMessage(FileMessage fileMessage){
-		Data[] hashes = (Data[]) fileMessage.hashes.getChildren();
-		new FileWriter(hashes, fileMessage.fileContent.getData(), fileMessage.filePath.getString(), (Data[])fileMessage.synchronizedDevices.getChildren());
+		System.out.println("received file");
+		LinkedList<Data> hashes = new LinkedList<>();
+		for(Data data : fileMessage.hashes){
+			hashes.add(data);
+		}
+		LinkedList<Data> synchronizedDevices = new LinkedList<>();
+		for(DataComponent data : fileMessage.synchronizedDevices)
+			synchronizedDevices.add(data.getData());
+		new FileWriter(hashes, fileMessage.fileContent.getData(), fileMessage.filePath.getString(), synchronizedDevices);
+	}
+	
+	@OnReceive(index = SblitMessage.DELETE_MESSAGE)
+	public void handleDeleteMessage(FileDeleteMessage deleteMessage){
+		File delete = new File(Configuration.getSblitDirectory().getAbsolutePath() + Configuration.slash + deleteMessage.filePath.getString());
+		if(delete.exists()){
+			delete.delete();
+		}
 	}
 	
 }

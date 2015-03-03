@@ -11,6 +11,7 @@ public class SblitMessage extends SwitchPacketComponent<CallbackMessage> {
 	public static final int FILE_REQUEST = 2;
 	public static final int FILE_RESPONSE = 3;
 	public static final int FILE_MESSAGE = 4;
+	public static final int DELETE_MESSAGE = 5;
 
 	//
 
@@ -28,6 +29,8 @@ public class SblitMessage extends SwitchPacketComponent<CallbackMessage> {
 	@Child(index = FILE_REQUEST) public FileRequestMessage fileRequest = new FileRequestMessage();
 	@Child(index = FILE_RESPONSE) public FileResponseMessage fileResponse = new FileResponseMessage();
 	@Child(index = FILE_MESSAGE) public FileMessage fileMessage = new FileMessage();
+	@Child(index = DELETE_MESSAGE) public FileDeleteMessage deleteMessage = new FileDeleteMessage();
+	
 	
 	// TODO add other messages as follows:
 	// @Child(index = REPLACE_ME_WITH_TYPE_ID) public WhatEverMessage whatEver;

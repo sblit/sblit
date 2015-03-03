@@ -38,17 +38,18 @@ public class FileWriter {
 	 */
 	
 	//TODO bei gelegenheit aufräumen
-	public FileWriter(Data[] logs, Data file, String filePath, Data[] synchronizedDevices){
+	public FileWriter(LinkedList<Data> logs, Data file, String filePath, LinkedList<Data> synchronizedDevices){
 		fileWriters.add(this);
 		try {
 			changeLogs(logs, filePath, synchronizedDevices);
-			Files.write(Paths.get(Configuration.getSblitDirectory() + filePath), file.getData());
+			System.out.println("File content: " + file.represent());
+			Files.write(Paths.get(Configuration.getSblitDirectory() + Configuration.slash + filePath), file.getData());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	private synchronized void changeLogs(Data[] hashes, String filePath, Data[] synchronizedDevices) throws IOException{
+	private synchronized void changeLogs(LinkedList<Data> hashes, String filePath, LinkedList<Data> synchronizedDevices) throws IOException{
 		HashMap<String, LinkedList<Data>> logs = DirectoryWatcher.getLogs();
 		logs.remove(filePath);
 		LinkedList<Data> log = new LinkedList<Data>();
@@ -77,7 +78,7 @@ public class FileWriter {
 			s += temp.substring(1);
 		}
 		s = s.substring(2);
-		Files.write(Paths.get(Configuration.getConfigurationDirectory() + Configuration.LOG_FILE), s.getBytes());
+		Files.write(Paths.get(Configuration.getConfigurationDirectory().getAbsolutePath() + Configuration.LOG_FILE), s.getBytes());
 		
 	}
 	
