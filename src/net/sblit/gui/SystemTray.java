@@ -20,12 +20,12 @@ import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
 
 public class SystemTray {
-	public static void main(String[] args) {
+	
+	public SystemTray(){
 		Display display = new Display();
 		final Shell shell = new Shell(display);
 		final ConfigurationDialog configurationDialog = new ConfigurationDialog(shell);
 
-		// Absoluten Pfad angeben
 		Image image = new Image(display, "bin\\net\\sblit\\gui\\icon.png");
 
 		final Tray systemTray = display.getSystemTray();
@@ -80,7 +80,7 @@ public class SystemTray {
 					saveKeyDialog.setFileName("publicKey.txt");
 					saveKeyDialog.open();
 					try {
-						new BufferedWriter(new FileWriter(saveKeyDialog.getFileName())).write("" +	Configuration.getKey());
+						new BufferedWriter(new FileWriter(saveKeyDialog.getFileName())).write("" +	Configuration.getKey().toString());
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
 						System.out.println("For test issues: " + saveKeyDialog.getFileName());
