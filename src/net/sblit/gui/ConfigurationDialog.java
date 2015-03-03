@@ -19,7 +19,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
-import org.sblit.configuration.Configuration;
+
+import net.sblit.configuration.Configuration;
 
 /**
  * Draws the configuration-dialog. At this GUI
@@ -30,14 +31,12 @@ import org.sblit.configuration.Configuration;
 public class ConfigurationDialog{
 	//TODO static?
 	Shell configShell;
-	Configuration configuration;
 	String[] receivers;
 	File dataDirectory;
 	boolean configSaved = true;
 
 	public ConfigurationDialog(Shell parentShell){
 		this.configShell = new Shell (parentShell);
-//		this.configuration = new Configuration();
 	}
 	
 	public void open(){
@@ -259,7 +258,7 @@ public class ConfigurationDialog{
 	public Shell getConfigShell(){
 		return configShell;
 	}
-	
+
 	private static void centerShell(Shell shell, Display display) {
 		Rectangle bounds = display.getBounds();
 		int width = 600;

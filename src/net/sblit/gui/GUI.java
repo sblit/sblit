@@ -5,13 +5,11 @@ import java.io.File;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.TableItem;
 
 /**
  * The main class for the graphical user interface.
@@ -29,7 +27,7 @@ public class GUI {
 			@Override
 			public void handleEvent (Event event) {
 				int style = SWT.APPLICATION_MODAL | SWT.YES | SWT.NO;
-				MessageBox messageBox = new MessageBox (shell, style);
+				MessageBox messageBox = new MessageBox (shell, SWT.ABORT);
 				messageBox.setText ("Information");
 				messageBox.setMessage ("Do you really want to close sblit?");
 				event.doit = messageBox.open () == SWT.YES;
@@ -59,7 +57,7 @@ public class GUI {
 		configure.addListener (SWT.Selection, new Listener () {
 			@Override
 			public void handleEvent (Event e) {
-				new ConfigurationDialog().open(shell);
+				new ConfigurationDialog(shell).open();
 			}
 		});
 		configure.setText ("&Configure\tCtrl+Alt+C");
