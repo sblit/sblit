@@ -1,4 +1,4 @@
-package org.sblit.gui;
+package net.sblit.gui;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;

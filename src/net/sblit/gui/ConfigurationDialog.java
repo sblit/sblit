@@ -1,4 +1,4 @@
-package org.sblit.gui;
+package net.sblit.gui;
 
 import java.io.File;
 import java.util.Random;
