@@ -1,6 +1,9 @@
 package net.sblit.gui;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 
 import org.eclipse.swt.SWT;
@@ -20,8 +23,6 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
-import net.sblit.configuration.Configuration;
-
 /**
  * Draws the configuration-dialog. At this GUI
  * the user can set all configuration parameters of sblit.
@@ -38,7 +39,7 @@ public class ConfigurationDialog{
 	public ConfigurationDialog(Shell parentShell){
 		this.configShell = new Shell (parentShell);
 	}
-	
+
 	public void open(){
 		//configShell.
 		// TODO getReceivers wirft NullPointerException --> momentan wird ein dummyarray benutzt
@@ -58,7 +59,7 @@ public class ConfigurationDialog{
 				}
 			}
 		});
-		
+
 		GridLayout layout = new GridLayout(2, false);
 		configShell.setLayout(layout);
 
@@ -68,7 +69,7 @@ public class ConfigurationDialog{
 		receiverGroup.setLayoutData(layoutData);
 		layout = new GridLayout(3, false);
 		receiverGroup.setLayout(layout);
-		
+
 		Group partnerGroup = new Group(configShell, 0);
 		partnerGroup.setText("Partner");
 		layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1);
@@ -98,9 +99,9 @@ public class ConfigurationDialog{
 		drawPartnerGroup(partnerGroup);
 		drawDirectoryGroup(directoryGroup);
 		drawquitBtns(quitBtns);
-		
-//		centerShell(shell, display);
-		
+
+		//		centerShell(shell, display);
+
 		configShell.pack();
 		configShell.open();
 	}
@@ -155,7 +156,7 @@ public class ConfigurationDialog{
 		exportBtn.setLayoutData(layoutData);
 
 		Table receiverTable = new Table(parent, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
-		fillReceiverTable(receiverTable, true);
+		fillReceiverTableDummy(receiverTable, true);
 		layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
 		receiverTable.setLayoutData(layoutData);
 
@@ -174,7 +175,7 @@ public class ConfigurationDialog{
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
 		removeReceiverBtn.setLayoutData(layoutData);
 	}
-	
+
 	private static void drawPartnerGroup(Group parent) {
 		Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
 		receiverFileStateLbl.setText("");
@@ -203,17 +204,41 @@ public class ConfigurationDialog{
 		removeReceiverBtn.setLayoutData(layoutData);
 	}
 
-	private static void fillReceiverTable(Table table, boolean insertDummyData) {
+	private static void fillReceiverTable(Table table, HashMap<String, String> receivers) {
+		table.setLinesVisible (true);
+		table.setHeaderVisible (true);
+
+		TableColumn hostnameColumn = new TableColumn(table, SWT.LEFT);
+		hostnameColumn.setText("Hostname");
+
+		TableColumn keyColumn = new TableColumn(table, SWT.LEFT);
+		keyColumn.setText("Public Key");
+
+		TableItem item = null;
+
+		Iterator iterator = receivers.entrySet().iterator();
+		while (iterator.hasNext()) {
+			Map.Entry pair = (Map.Entry)iterator.next();
+			item.setText(0, "" + pair.getKey());
+			item.setText(1, "" + pair.getValue());
+			iterator.remove(); // avoids a ConcurrentModificationException
+		}
+
+		table.getColumn(0).pack();
+		table.getColumn(1).pack();
+	}
+
+	private static void fillReceiverTableDummy(Table table, boolean insertDummyData) {
 		if (insertDummyData){
 			table.setLinesVisible (true);
 			table.setHeaderVisible (true);
-			
+
 			TableColumn hostnameColumn = new TableColumn(table, SWT.LEFT);
 			hostnameColumn.setText("Hostname");
 
 			TableColumn keyColumn = new TableColumn(table, SWT.LEFT);
 			keyColumn.setText("Public Key");
-			
+
 			String[] hostnames = {"Laptop","Desktop", "Arbeit", "Opa-PC"};
 			int n = 4;
 			TableItem item;
@@ -226,7 +251,7 @@ public class ConfigurationDialog{
 			table.getColumn(1).pack();
 		}
 	}
-	
+
 	private static void fillPartnerTable(Table table, boolean insertDummyData) {
 		if (insertDummyData){
 			table.setLinesVisible (true);
@@ -234,7 +259,7 @@ public class ConfigurationDialog{
 
 			TableColumn keyColumn = new TableColumn(table, SWT.LEFT);
 			keyColumn.setText("Public Key");
-			
+
 			int n = 30;
 			TableItem item;
 			for(int i = 0; i < n; i++) {
@@ -243,18 +268,19 @@ public class ConfigurationDialog{
 			}
 			table.getColumn(0).pack();
 		}
+
 	}
 
 	private static String getRandomHexString(int numchars){
-        Random r = new Random();
-        StringBuffer sb = new StringBuffer();
-        while(sb.length() < numchars){
-            sb.append(Integer.toHexString(r.nextInt()));
-        }
+		Random r = new Random();
+		StringBuffer sb = new StringBuffer();
+		while(sb.length() < numchars){
+			sb.append(Integer.toHexString(r.nextInt()));
+		}
 
-        return sb.toString().substring(0, numchars);
-    }
-	
+		return sb.toString().substring(0, numchars);
+	}
+
 	public Shell getConfigShell(){
 		return configShell;
 	}
@@ -263,7 +289,7 @@ public class ConfigurationDialog{
 		Rectangle bounds = display.getBounds();
 		int width = 600;
 		int height = 450;
-		
+
 		shell.setBounds((bounds.width-width)/2, (bounds.height-height)/2, width, height);;
 	}
 }

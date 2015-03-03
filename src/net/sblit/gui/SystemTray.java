@@ -1,7 +1,6 @@
 package net.sblit.gui;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -20,6 +19,10 @@ import org.eclipse.swt.widgets.Tray;
 import org.eclipse.swt.widgets.TrayItem;
 
 public class SystemTray {
+	
+	public static void main(String[] args) {
+		new SystemTray();
+	}
 	
 	public SystemTray(){
 		Display display = new Display();
