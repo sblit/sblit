@@ -65,6 +65,7 @@ public class ApplicationChannelActionListener implements
 	public void onApplicationChannelConnected(ApplicationChannel applicationChannel) {
 
 		this.applicationChannel = applicationChannel;
+		Configuration.addUnauthorizedChannel(applicationChannel.getRemotePublicKey().toData(), applicationChannel);
 
 		streamByteBuf = new StreamByteBuf(applicationChannel.getOutputStream());
 

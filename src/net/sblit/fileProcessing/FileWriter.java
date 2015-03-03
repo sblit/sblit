@@ -67,12 +67,12 @@ public class FileWriter {
 			s += ", " + path + "=";
 			String temp = "";
 			for(Data data : logs.get(path)){
-				temp += "," + data.represent();
+				temp += "," + data.toString();
 			}
 			s += temp.substring(1) + ";";
 			temp = "";
 			for(Data data : devices.get(path)){
-				temp += "," + data.represent();
+				temp += "," + data.toString();
 			}
 			s += temp.substring(1);
 		}

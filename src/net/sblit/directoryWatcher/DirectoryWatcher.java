@@ -142,12 +142,12 @@ public class DirectoryWatcher {
 			s += ", " + path + "=";
 			String temp = "";
 			for(Data data : files.get(path)){
-				temp += "," + data.represent();
+				temp += "," + data.toString();
 			}
 			s += temp.substring(1) + ";";
 			temp = "";
 			for(Data data : synchronizedDevices.get(path)){
-				temp += "," + data.represent();
+				temp += "," + data.toString();
 			}
 			s += temp.substring(1);
 		}
