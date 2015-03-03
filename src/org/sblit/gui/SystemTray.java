@@ -15,14 +15,13 @@ public class SystemTray {
 	public static void main(String[] args) {
 		Display display = new Display();
 		final Shell shell = new Shell(display);
+		final ConfigurationDialog configurationDialog = new ConfigurationDialog(shell);
 
-		Image image = new Image(display, "D:\\Dokumente\\Schule\\5DN\\Diplomarbeit\\sblit\\src\\org\\sblit\\gui\\troll.jpg");
+		Image image = new Image(display, "D:\\Dokumente\\Schule\\5DN\\Diplomarbeit\\sblit\\src\\org\\sblit\\gui\\icon.png");
 
 		final Tray systemTray = display.getSystemTray();
 
-		if (systemTray == null){
-			// TODO Is there something??
-		} else {
+		if (systemTray != null){
 			TrayItem item = new TrayItem(systemTray, SWT.NONE);
 			item.setToolTipText("sblit 0.0");
 			item.addListener(SWT.Show, new Listener() {
@@ -45,16 +44,23 @@ public class SystemTray {
 					System.out.println("default selection");
 				}
 			});
+			
 			final Menu menu = new Menu(shell, SWT.POP_UP);
 			MenuItem configurationMenuItem = new MenuItem(menu, SWT.PUSH);
 			configurationMenuItem.setText("Configuration");
 			configurationMenuItem.addListener(SWT.Selection, new Listener() {
 				public void handleEvent(Event event) {
-					new ConfigurationDialog().open(shell);
+					configurationDialog.open();
 				}
 			});
-			
-			MenuItem closeMenuItem = new MenuItem(menu, SWT.CLOSE);
+			MenuItem printItem = new MenuItem(menu, SWT.PUSH);
+			printItem.setText("Print Status");
+			printItem.addListener(SWT.Selection, new Listener() {
+				public void handleEvent(Event event) {
+					System.out.println(configurationDialog.getConfigShell().isDisposed());
+				}
+			});
+			MenuItem closeMenuItem = new MenuItem(menu, SWT.PUSH);
 			closeMenuItem.setText("Shutdown sblit");
 			closeMenuItem.addListener(SWT.Selection, new Listener() {
 				public void handleEvent(Event event) {
@@ -75,6 +81,7 @@ public class SystemTray {
 		}
 		image.dispose();
 		display.dispose();
+		shell.dispose();
 	}
 }
 
