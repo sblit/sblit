@@ -156,7 +156,7 @@ public class ConfigurationDialog{
 		exportBtn.setLayoutData(layoutData);
 
 		Table receiverTable = new Table(parent, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
-		fillReceiverTableDummy(receiverTable, true);
+		fillReceiverTable(receiverTable, dummyReceiverHashMap());
 		layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
 		receiverTable.setLayoutData(layoutData);
 
@@ -214,42 +214,32 @@ public class ConfigurationDialog{
 		TableColumn keyColumn = new TableColumn(table, SWT.LEFT);
 		keyColumn.setText("Public Key");
 
-		TableItem item = null;
+		TableItem item = null;;
 
-		Iterator iterator = receivers.entrySet().iterator();
-		while (iterator.hasNext()) {
-			Map.Entry pair = (Map.Entry)iterator.next();
-			item.setText(0, "" + pair.getKey());
-			item.setText(1, "" + pair.getValue());
-			iterator.remove(); // avoids a ConcurrentModificationException
+		for (Map.Entry<String, String> entry : receivers.entrySet())
+		{
+			item = new TableItem(table, SWT.NONE);
+			item.setText(0, "" + entry.getKey());
+			item.setText(1, "" + entry.getValue());
 		}
 
 		table.getColumn(0).pack();
 		table.getColumn(1).pack();
 	}
 
-	private static void fillReceiverTableDummy(Table table, boolean insertDummyData) {
-		if (insertDummyData){
-			table.setLinesVisible (true);
-			table.setHeaderVisible (true);
-
-			TableColumn hostnameColumn = new TableColumn(table, SWT.LEFT);
-			hostnameColumn.setText("Hostname");
-
-			TableColumn keyColumn = new TableColumn(table, SWT.LEFT);
-			keyColumn.setText("Public Key");
-
-			String[] hostnames = {"Laptop","Desktop", "Arbeit", "Opa-PC"};
-			int n = 4;
-			TableItem item;
-			for(int i = 0; i < n; i++) {
-				item = new TableItem(table, SWT.NONE);
-				item.setText(0, hostnames[i]);
-				item.setText(1, getRandomHexString(40));
-			}
-			table.getColumn(0).pack();
-			table.getColumn(1).pack();
+	/**
+	 * 
+	 * @return A {HashMap} with 4 rows of dummy data (hostname - rnd key)
+	 */
+	private static HashMap<String, String> dummyReceiverHashMap() {
+		HashMap<String, String> hashMap = new HashMap<>();
+		String[] hostnames = {"Laptop","Desktop", "Arbeit", "Opa-PC"};
+		
+		for(String s : hostnames) {
+			hashMap.put(s, getRandomHexString(40));
 		}
+		System.out.println(hashMap.toString());
+		return hashMap;
 	}
 
 	private static void fillPartnerTable(Table table, boolean insertDummyData) {
@@ -260,7 +250,7 @@ public class ConfigurationDialog{
 			TableColumn keyColumn = new TableColumn(table, SWT.LEFT);
 			keyColumn.setText("Public Key");
 
-			int n = 30;
+			int n = 10;
 			TableItem item;
 			for(int i = 0; i < n; i++) {
 				item = new TableItem(table, SWT.NONE);
