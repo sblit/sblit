@@ -71,16 +71,18 @@ public class DirectoryWatcher {
 
 			Map<String, LinkedList<Data>> files = getLogs();
 			Map<String, LinkedList<Data>> synchronizedDevices = getSynchronizedDevices();
-
+			
+			System.out.println("files: " + files);
+			
 			filesToPush = new File[0];
 			filesToDelete = new File[0];
 
 			for (@SuppressWarnings("rawtypes")
 			WatchEvent event : events) {
-				byte[] fileContent = readFile(event);
-				// �berpr�ft, was mit dem File passiert ist
-				Data hash = Crypto.sha1(new Data(fileContent));
 				if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
+					byte[] fileContent = readFile(event);
+					// �berpr�ft, was mit dem File passiert ist
+					Data hash = Crypto.sha1(new Data(fileContent));
 					LinkedList<Data> hashes = new LinkedList<>();
 					hashes.add(hash);
 					files.put(event.context().toString(), hashes);
@@ -96,6 +98,9 @@ public class DirectoryWatcher {
 							new File(Configuration.getSblitDirectory() + Configuration.slash
 									+ event.context().toString()));
 				} else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
+					byte[] fileContent = readFile(event);
+					// �berpr�ft, was mit dem File passiert ist
+					Data hash = Crypto.sha1(new Data(fileContent));
 					// �berpr�ft, ob ein User die �nderung vorgenommen
 					// hat, oder
 					// das
@@ -119,9 +124,10 @@ public class DirectoryWatcher {
 				}
 				System.out.println(event.context().toString());
 			}
-
 			logFile.createNewFile();
+			System.out.println(files);
 			write(files, synchronizedDevices);
+			
 
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -136,22 +142,26 @@ public class DirectoryWatcher {
 				+ Configuration.slash + event.context().toString()));
 	}
 
-	private synchronized void write(Map<String, LinkedList<Data>> files,Map<String, LinkedList<Data>> synchronizedDevices) throws IOException {
+	private synchronized void write(Map<String, LinkedList<Data>> files,
+			Map<String, LinkedList<Data>> synchronizedDevices) throws IOException {
 		String s = "";
-		for(String path:files.keySet()){
-			s += ", " + path + "=";
-			String temp = "";
-			for(Data data : files.get(path)){
-				temp += "," + data.toString();
+		if (files.size() > 0) {
+			for (String path : files.keySet()) {
+				s += ", " + path + "=";
+				String temp = "";
+				for (Data data : files.get(path)) {
+					temp += "," + data.toString();
+				}
+				s += temp.substring(1) + ";";
+				temp = "";
+				for (Data data : synchronizedDevices.get(path)) {
+					temp += "," + data.toString();
+				}
+				s += temp.substring(1);
 			}
-			s += temp.substring(1) + ";";
-			temp = "";
-			for(Data data : synchronizedDevices.get(path)){
-				temp += "," + data.toString();
-			}
-			s += temp.substring(1);
+			s = s.substring(2);
 		}
-		s = s.substring(2);
+		System.out.println("write: " + s);
 		Files.write(logFile.toPath(), s.getBytes());
 	}
 
@@ -191,7 +201,7 @@ public class DirectoryWatcher {
 		if (logFile.exists()) {
 			String[] logFileContent = new String(Files.readAllBytes(logFile.toPath())).split(", ");
 			for (String line : logFileContent) {
-				if(line.trim().equals(""))
+				if (line.trim().equals(""))
 					break;
 				LinkedList<Data> hashes = new LinkedList<>();
 				for (String s : line.split("=")[1].split(";")[0].split(",")) {
@@ -217,7 +227,8 @@ public class DirectoryWatcher {
 				String[] logFileContent = new String(Files.readAllBytes(logFile.toPath()))
 						.split(", ");
 				for (String line : logFileContent) {
-					if(line.trim().equals("")) break;
+					if (line.trim().equals(""))
+						break;
 					LinkedList<Data> hashes = new LinkedList<>();
 					for (String s : line.split("=")[1].split(";")[1].split(",")) {
 						Data temp = new Data();
@@ -234,13 +245,13 @@ public class DirectoryWatcher {
 	}
 
 	private File[] refreshFilesArray(File[] oldFileArray, File newFile) {
-		File[] temp = filesToPush.clone();
-		filesToPush = new File[filesToPush.length + 1];
+		File[] temp = oldFileArray.clone();
+		oldFileArray = new File[oldFileArray.length + 1];
 		for (int i = 0; i < temp.length; i++) {
-			filesToPush[i] = temp[i];
+			oldFileArray[i] = temp[i];
 		}
-		filesToPush[filesToPush.length - 1] = newFile;
-		return filesToPush;
+		oldFileArray[oldFileArray.length - 1] = newFile;
+		return oldFileArray;
 	}
 
 	public File[] getFilesToPush() {
@@ -249,6 +260,10 @@ public class DirectoryWatcher {
 
 	public File getLogFile() {
 		return logFile;
+	}
+
+	public File[] getFilesToDelete() {
+		return filesToDelete;
 	}
 
 }

@@ -23,13 +23,11 @@ public class Sblit {
 
 	public static void main(String[] args) {
 		new Sblit();
-
 	}
 
 	public Sblit() {
 		Configuration.initialize();
 		System.out.println(new Configuration().toString());
-		
 
 		// TODO Share public key
 
@@ -40,45 +38,56 @@ public class Sblit {
 				SblitMessage message = new SblitMessage();
 				while (true) {
 					DirectoryWatcher directoryWatcher = new DirectoryWatcher(
-							Configuration.getSblitDirectory(),
-							new File(Configuration.getConfigurationDirectory().toString() + Configuration.LOG_FILE), new String(Configuration.getKey()));
+							Configuration.getSblitDirectory(), new File(Configuration
+									.getConfigurationDirectory().toString()
+									+ Configuration.LOG_FILE), new String(Configuration.getKey()));
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					for (File f : directoryWatcher.getFilesToPush()){
+					for (File f : directoryWatcher.getFilesToPush()) {
 						System.out.println(f.getAbsolutePath());
-						String path = f.getAbsolutePath().replace(
-								Configuration.getSblitDirectory().getAbsolutePath(), "").substring(1);
+						String path = f.getAbsolutePath()
+								.replace(Configuration.getSblitDirectory().getAbsolutePath(), "")
+								.substring(1);
 						LinkedList<Data> hashes;
 						try {
-							System.out.println(path);
 							hashes = DirectoryWatcher.getLogs().get(path);
-							System.out.println(hashes);
+							message.set(SblitMessage.FILE_REQUEST);
+							message.fileRequest.path.setString(path);
+							message.fileRequest.hashes.setElements(hashes);
 							for (Data channel : Configuration.getChannels()) {
-								message.set(SblitMessage.FILE_REQUEST);
-								message.fileRequest.path.setString(path);
-								//TODO not null
-								message.fileRequest.hashes.setElements(hashes);
 								try {
-									new StreamByteBuf(
-											Configuration.getChannel(channel).
-											getOutputStream()).
-											write(message);
+									new StreamByteBuf(Configuration.getChannel(channel)
+											.getOutputStream()).write(message);
 								} catch (BufException e) {
 									e.printStackTrace();
-								};
+								}
 							}
 						} catch (IOException e) {
 							e.printStackTrace();
+						}
+					}
+					for (File f : directoryWatcher.getFilesToDelete()) {
+						String path = f.getAbsolutePath()
+								.replace(Configuration.getSblitDirectory().getAbsolutePath(), "")
+								.substring(1);
+						message.set(SblitMessage.DELETE_MESSAGE);
+						message.deleteMessage.filePath.setString(path);
+						for (Data channel : Configuration.getChannels()) {
+							try {
+								new StreamByteBuf(Configuration.getChannel(channel)
+										.getOutputStream()).write(message);
+							} catch (BufException e) {
+								e.printStackTrace();
+							}
 						}
 					}
 				}
 
 			}
 		}).run();
-	
+
 	}
-	
 }
