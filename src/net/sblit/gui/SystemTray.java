@@ -27,7 +27,7 @@ public class SystemTray {
 	public SystemTray(){
 		Display display = new Display();
 		final Shell shell = new Shell(display);
-		final ConfigurationDialog configurationDialog = new ConfigurationDialog(shell);
+		final ConfigurationDialog configurationDialog = new ConfigurationDialog();
 
 		Image image = new Image(display, "bin\\net\\sblit\\gui\\icon.png");
 
@@ -36,26 +36,26 @@ public class SystemTray {
 		if (systemTray != null){
 			TrayItem item = new TrayItem(systemTray, SWT.NONE);
 			item.setToolTipText("sblit 0.0");
-			item.addListener(SWT.Show, new Listener() {
-				public void handleEvent(Event event) {
-					System.out.println("Show Event");
-				}
-			});;
-			item.addListener(SWT.Hide, new Listener() {
-				public void handleEvent(Event event) {
-					System.out.println("hide");
-				}
-			});
-			item.addListener(SWT.Selection, new Listener() {
-				public void handleEvent(Event event) {
-					System.out.println("selection");
-				}
-			});
-			item.addListener(SWT.DefaultSelection, new Listener() {
-				public void handleEvent(Event event) {
-					System.out.println("default selection");
-				}
-			});
+//			item.addListener(SWT.Show, new Listener() {
+//				public void handleEvent(Event event) {
+//					System.out.println("Show Event");
+//				}
+//			});;
+//			item.addListener(SWT.Hide, new Listener() {
+//				public void handleEvent(Event event) {
+//					System.out.println("hide");
+//				}
+//			});
+//			item.addListener(SWT.Selection, new Listener() {
+//				public void handleEvent(Event event) {
+//					System.out.println("selection");
+//				}
+//			});
+//			item.addListener(SWT.DefaultSelection, new Listener() {
+//				public void handleEvent(Event event) {
+//					System.out.println("default selection");
+//				}
+//			});
 			
 			final Menu menu = new Menu(shell, SWT.POP_UP);
 			MenuItem configurationMenuItem = new MenuItem(menu, SWT.PUSH);
@@ -86,7 +86,7 @@ public class SystemTray {
 						new BufferedWriter(new FileWriter(saveKeyDialog.getFileName())).write("" +	Configuration.getKey().toString());
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
-						System.out.println("For test issues: " + saveKeyDialog.getFileName());
+						e1.printStackTrace();
 					}
 				}
 			});

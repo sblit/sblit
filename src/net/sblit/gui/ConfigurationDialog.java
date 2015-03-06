@@ -6,12 +6,17 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 
+import net.sblit.configuration.Configuration;
+
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
@@ -36,11 +41,12 @@ public class ConfigurationDialog{
 	File dataDirectory;
 	boolean configSaved = true;
 
-	public ConfigurationDialog(Shell parentShell){
-		this.configShell = new Shell (parentShell);
+	public ConfigurationDialog(){
+		this.configShell = new Shell (Display.getCurrent());
+		create();
 	}
 
-	public void open(){
+	public void create(){
 		//configShell.
 		// TODO getReceivers wirft NullPointerException --> momentan wird ein dummyarray benutzt
 		// receivers = configuration.getReceivers();
@@ -103,12 +109,26 @@ public class ConfigurationDialog{
 		//		centerShell(shell, display);
 
 		configShell.pack();
+	}
+	
+	public void open(){
 		configShell.open();
 	}
+	
+	public void close(){
+		configShell.setVisible(false);
+	}
 
-	private static void drawquitBtns(Composite parent) {
+	private void drawquitBtns(Composite parent) {
 		Button cancelBtn = new Button(parent, SWT.PUSH);
 		cancelBtn.setText("Cancel");
+		cancelBtn.addSelectionListener(new SelectionAdapter()
+        {
+            @Override public void widgetSelected(final SelectionEvent e)
+            {
+                close();
+            }
+        });
 		GridData layoutData = new GridData(SWT.LEFT, SWT.BOTTOM, false, false, 1, 1);
 		cancelBtn.setLayoutData(layoutData);
 
@@ -118,19 +138,28 @@ public class ConfigurationDialog{
 		saveBtn.setLayoutData(layoutData);		
 	}
 
-	private static void drawDirectoryGroup(Group parent) {
-		Label directoryPathLbl = new Label(parent, 0);
-		directoryPathLbl.setText("C:\\Users\\Admin\\sblit");
+	private void drawDirectoryGroup(Group parent) {
+		final Label directoryPathLbl = new Label(parent, 0);
+		directoryPathLbl.setText(Configuration.getSblitDirectory().toString());
 		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
 		directoryPathLbl.setLayoutData(layoutData);
 
 		Button selectBtn = new Button(parent, SWT.PUSH);
 		selectBtn.setText("Select");
+		selectBtn.addSelectionListener(new SelectionAdapter()
+        {
+            @Override public void widgetSelected(final SelectionEvent e)
+            {
+            	DirectoryDialog dirDialog = new DirectoryDialog(configShell);
+            	dirDialog.open();
+            	directoryPathLbl.setText(dirDialog.getFilterPath().toString());
+            }
+        });
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
 		selectBtn.setLayoutData(layoutData);
 	}
 
-	private static void drawReceiverGroup(Group parent) {
+	private void drawReceiverGroup(Group parent) {
 		Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
 		receiverFileStateLbl.setText("");
 		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
@@ -176,7 +205,7 @@ public class ConfigurationDialog{
 		removeReceiverBtn.setLayoutData(layoutData);
 	}
 
-	private static void drawPartnerGroup(Group parent) {
+	private void drawPartnerGroup(Group parent) {
 		Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
 		receiverFileStateLbl.setText("");
 		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1);
@@ -204,7 +233,7 @@ public class ConfigurationDialog{
 		removeReceiverBtn.setLayoutData(layoutData);
 	}
 
-	private static void fillReceiverTable(Table table, HashMap<String, String> receivers) {
+	private void fillReceiverTable(Table table, HashMap<String, String> receivers) {
 		table.setLinesVisible (true);
 		table.setHeaderVisible (true);
 
@@ -231,7 +260,7 @@ public class ConfigurationDialog{
 	 * 
 	 * @return A {HashMap} with 4 rows of dummy data (hostname - rnd key)
 	 */
-	private static HashMap<String, String> dummyReceiverHashMap() {
+	private HashMap<String, String> dummyReceiverHashMap() {
 		HashMap<String, String> hashMap = new HashMap<>();
 		String[] hostnames = {"Laptop","Desktop", "Arbeit", "Opa-PC"};
 		
@@ -242,7 +271,7 @@ public class ConfigurationDialog{
 		return hashMap;
 	}
 
-	private static void fillPartnerTable(Table table, boolean insertDummyData) {
+	private void fillPartnerTable(Table table, boolean insertDummyData) {
 		if (insertDummyData){
 			table.setLinesVisible (true);
 			table.setHeaderVisible (true);
@@ -261,7 +290,7 @@ public class ConfigurationDialog{
 
 	}
 
-	private static String getRandomHexString(int numchars){
+	private String getRandomHexString(int numchars){
 		Random r = new Random();
 		StringBuffer sb = new StringBuffer();
 		while(sb.length() < numchars){
@@ -275,7 +304,7 @@ public class ConfigurationDialog{
 		return configShell;
 	}
 
-	private static void centerShell(Shell shell, Display display) {
+	private void centerShell(Shell shell, Display display) {
 		Rectangle bounds = display.getBounds();
 		int width = 600;
 		int height = 450;
