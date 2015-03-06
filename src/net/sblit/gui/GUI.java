@@ -57,7 +57,7 @@ public class GUI {
 		configure.addListener (SWT.Selection, new Listener () {
 			@Override
 			public void handleEvent (Event e) {
-				new ConfigurationDialog(shell).open();
+				new ConfigurationDialog().open();
 			}
 		});
 		configure.setText ("&Configure\tCtrl+Alt+C");

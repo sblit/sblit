@@ -39,7 +39,7 @@ public class ConfigurationDialog{
 	Shell configShell;
 	String[] receivers;
 	File dataDirectory;
-	boolean configSaved = true;
+	boolean configSaved = true; //TODO implement that shit
 
 	public ConfigurationDialog(){
 		this.configShell = new Shell (Display.getCurrent());
@@ -47,9 +47,6 @@ public class ConfigurationDialog{
 	}
 
 	public void create(){
-		//configShell.
-		// TODO getReceivers wirft NullPointerException --> momentan wird ein dummyarray benutzt
-		// receivers = configuration.getReceivers();
 		configShell.setText("Configuration");
 
 		// Adds a prompt for closing configuration-gui without saving
@@ -106,15 +103,13 @@ public class ConfigurationDialog{
 		drawDirectoryGroup(directoryGroup);
 		drawquitBtns(quitBtns);
 
-		//		centerShell(shell, display);
-
 		configShell.pack();
 	}
-	
+
 	public void open(){
 		configShell.open();
 	}
-	
+
 	public void close(){
 		configShell.setVisible(false);
 	}
@@ -123,12 +118,12 @@ public class ConfigurationDialog{
 		Button cancelBtn = new Button(parent, SWT.PUSH);
 		cancelBtn.setText("Cancel");
 		cancelBtn.addSelectionListener(new SelectionAdapter()
-        {
-            @Override public void widgetSelected(final SelectionEvent e)
-            {
-                close();
-            }
-        });
+		{
+			@Override public void widgetSelected(final SelectionEvent e)
+			{
+				close();
+			}
+		});
 		GridData layoutData = new GridData(SWT.LEFT, SWT.BOTTOM, false, false, 1, 1);
 		cancelBtn.setLayoutData(layoutData);
 
@@ -140,21 +135,25 @@ public class ConfigurationDialog{
 
 	private void drawDirectoryGroup(Group parent) {
 		final Label directoryPathLbl = new Label(parent, 0);
-		directoryPathLbl.setText(Configuration.getSblitDirectory().toString());
+		try {
+			directoryPathLbl.setText(Configuration.getSblitDirectory().toString());
+		} catch (NullPointerException e){
+			directoryPathLbl.setText("No Directory set.");
+		}
 		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
 		directoryPathLbl.setLayoutData(layoutData);
 
 		Button selectBtn = new Button(parent, SWT.PUSH);
 		selectBtn.setText("Select");
 		selectBtn.addSelectionListener(new SelectionAdapter()
-        {
-            @Override public void widgetSelected(final SelectionEvent e)
-            {
-            	DirectoryDialog dirDialog = new DirectoryDialog(configShell);
-            	dirDialog.open();
-            	directoryPathLbl.setText(dirDialog.getFilterPath().toString());
-            }
-        });
+		{
+			@Override public void widgetSelected(final SelectionEvent e)
+			{
+				DirectoryDialog dirDialog = new DirectoryDialog(configShell);
+				dirDialog.open();
+				directoryPathLbl.setText(dirDialog.getFilterPath().toString());
+			}
+		});
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
 		selectBtn.setLayoutData(layoutData);
 	}
@@ -184,13 +183,39 @@ public class ConfigurationDialog{
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
 		exportBtn.setLayoutData(layoutData);
 
-		Table receiverTable = new Table(parent, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
+		final Table receiverTable = new Table(parent, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
 		fillReceiverTable(receiverTable, dummyReceiverHashMap());
 		layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
 		receiverTable.setLayoutData(layoutData);
 
 		Button editBtn = new Button(parent, SWT.PUSH);
 		editBtn.setText("Edit");
+		editBtn.addSelectionListener(new SelectionAdapter()
+		{
+			@Override public void widgetSelected(final SelectionEvent e)
+			{
+				boolean inputCheck = true;
+				String[] input = new String[2];
+				String oldHost = receiverTable.getSelection()[0].getText().toString();
+				System.out.println(oldHost);
+				System.out.println(receiverTable.getSelection().length);
+				String oldKey  = receiverTable.getSelection()[1].getText();					//TODO Throws indexoutofboundexception because only Hostname is selected .. fix it you bastard!
+				while(inputCheck){
+					StringInputDialog receiverDialog = new StringInputDialog(configShell);
+					receiverDialog.setMessage("");
+					receiverDialog.setInput(oldHost + ";" + oldKey);
+					input = receiverDialog.open().split(";");
+					checkInput(input);
+				}
+				String newHost = input[0];
+				String newKey = input[1];
+				if(oldHost!=newHost && oldKey!=newKey){
+					configSaved = false;
+					receiverTable.getSelection()[0].setText(newHost);
+					receiverTable.getSelection()[1].setText(newKey);
+				}
+			}
+		});
 		layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
 		editBtn.setLayoutData(layoutData);
 
@@ -203,6 +228,11 @@ public class ConfigurationDialog{
 		removeReceiverBtn.setText("Remove");
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
 		removeReceiverBtn.setLayoutData(layoutData);
+	}
+
+	private boolean checkInput(String[] input){
+		//TODO Implement the checking method
+		return true;
 	}
 
 	private void drawPartnerGroup(Group parent) {
@@ -263,7 +293,7 @@ public class ConfigurationDialog{
 	private HashMap<String, String> dummyReceiverHashMap() {
 		HashMap<String, String> hashMap = new HashMap<>();
 		String[] hostnames = {"Laptop","Desktop", "Arbeit", "Opa-PC"};
-		
+
 		for(String s : hostnames) {
 			hashMap.put(s, getRandomHexString(40));
 		}
