@@ -194,26 +194,7 @@ public class ConfigurationDialog{
 		{
 			@Override public void widgetSelected(final SelectionEvent e)
 			{
-				boolean inputCheck = true;
-				String[] input = new String[2];
-				String oldHost = receiverTable.getSelection()[0].getText().toString();
-				System.out.println(oldHost);
-				System.out.println(receiverTable.getSelection().length);
-				String oldKey  = receiverTable.getSelection()[1].getText();					//TODO Throws indexoutofboundexception because only Hostname is selected .. fix it you bastard!
-				while(inputCheck){
-					StringInputDialog receiverDialog = new StringInputDialog(configShell);
-					receiverDialog.setMessage("");
-					receiverDialog.setInput(oldHost + ";" + oldKey);
-					input = receiverDialog.open().split(";");
-					checkInput(input);
-				}
-				String newHost = input[0];
-				String newKey = input[1];
-				if(oldHost!=newHost && oldKey!=newKey){
-					configSaved = false;
-					receiverTable.getSelection()[0].setText(newHost);
-					receiverTable.getSelection()[1].setText(newKey);
-				}
+				editReceiver(receiverTable);
 			}
 		});
 		layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
@@ -228,6 +209,24 @@ public class ConfigurationDialog{
 		removeReceiverBtn.setText("Remove");
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
 		removeReceiverBtn.setLayoutData(layoutData);
+	}
+	
+	private void editReceiver(Table receiverTable){
+		String[] input = new String[2];
+		TableItem selection = receiverTable.getSelection()[0];
+		String oldHost = selection.getText(0).toString();
+		String oldKey  = selection.getText(1).toString();					
+		StringInputDialog receiverDialog = new StringInputDialog();
+		receiverDialog.setMessage("Edit the receiver.  Format: hostname;publicKey");
+		receiverDialog.setInput(oldHost + ";" + oldKey);
+		input = receiverDialog.open();
+		String newHost = input[0];
+		String newKey = input[1];
+		if(oldHost!=newHost && oldKey!=newKey){
+			configSaved = false;
+			selection.setText(0, newHost);
+			selection.setText(1, newKey);
+		}
 	}
 
 	private boolean checkInput(String[] input){

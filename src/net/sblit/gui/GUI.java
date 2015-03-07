@@ -89,4 +89,9 @@ public class GUI {
 		// TODO Implement the export function.
 		System.out.println ("Choose file");
 	}
+
+	public void open() {
+		// TODO Auto-generated method stub
+		
+	}
 }

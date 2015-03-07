@@ -13,78 +13,65 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-public class StringInputDialog extends Dialog {
-	private String message;
-	private String input;
+public class StringInputDialog{
+	private Shell inputDialogShell;
+	private Display display = Display.getCurrent();
+	private String message = "";
+	private String input   = "";
 
-	public StringInputDialog(Shell parent) {
-		this(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
+	public StringInputDialog() {
+		this.inputDialogShell = new Shell(display);
 	}
 
-	public StringInputDialog(Shell parent, int style) {
-		super(parent, style);
-		setText("Receiver Edit Dialog");
-		setMessage("Please enter a value:");
-	}
-	
-	public String open() {
-		Shell inputDialogShell = new Shell(getParent(), getStyle());
-		inputDialogShell.setText(getText());
-		drawContent(inputDialogShell);
+	public String[] open() {
+		drawContent();
 		inputDialogShell.open();
+		inputDialogShell.pack();
 		
-		Rectangle parentBounds = getParent().getBounds();
-		inputDialogShell.setBounds(parentBounds.x + 10, parentBounds.y + 10, 200, 200);
-		
-		Display display = getParent().getDisplay();
-	    while (!inputDialogShell.isDisposed()) {
-	      if (!display.readAndDispatch()) {
-	        display.sleep();
-	      }
-	    }
-		return input;
+		while (!inputDialogShell.isDisposed()) {
+			if (!display.readAndDispatch())
+				display.sleep();
+		}
+		return input.split(";");
 	}
 	
-	private void drawContent(final Shell parentShell){
+	private void drawContent(){
 		GridLayout gridLayout = new GridLayout(2, false);
-		parentShell.setLayout(gridLayout);
+		gridLayout.horizontalSpacing = 5;
+		gridLayout.verticalSpacing = 10;
+		inputDialogShell.setLayout(gridLayout);
 		
-		final Label messageLbl = new Label(parentShell, SWT.NONE);
+		final Label messageLbl = new Label(inputDialogShell, SWT.NONE);
 		messageLbl.setText(message);
 		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1);
 		messageLbl.setLayoutData(layoutData);
 		
-		final Text inputField = new Text(parentShell, SWT.BORDER);
+		final Text inputField = new Text(inputDialogShell, SWT.BORDER);
 		inputField.setText(input);
-		inputField.setSelection(0);
-		layoutData = new GridData(SWT.LEFT, SWT.CENTER, true, false, 2, 1);
+		layoutData = new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1);
 		inputField.setLayoutData(layoutData);
+		inputField.setSelection(0,input.length());
 		
-		final Button okBtn = new Button(parentShell, SWT.PUSH);
+		final Button okBtn = new Button(inputDialogShell, SWT.PUSH);
 		okBtn.setText("OK");
 		okBtn.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				input = inputField.getText();
-				parentShell.close();
+				inputDialogShell.close();
 			}
 		});
-		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
+		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, true, false, 1, 1);
 		okBtn.setLayoutData(layoutData);
 		
-		final Button cancelBtn = new Button(parentShell, SWT.PUSH);
+		final Button cancelBtn = new Button(inputDialogShell, SWT.PUSH);
 		cancelBtn.setText("Cancel");
 		cancelBtn.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
-				parentShell.close();
+				inputDialogShell.close();
 			}
 		});
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
 		cancelBtn.setLayoutData(layoutData);
-		
-		
-		
-		
-		
 	}
 	
 	public void setMessage(String message) {

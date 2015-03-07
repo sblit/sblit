@@ -1,6 +1,8 @@
 package net.sblit.gui;
 
+import java.awt.Desktop;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -28,6 +30,7 @@ public class SystemTray {
 		Display display = new Display();
 		final Shell shell = new Shell(display);
 		final ConfigurationDialog configurationDialog = new ConfigurationDialog();
+		final GUI gui = new GUI();
 
 		Image image = new Image(display, "bin\\net\\sblit\\gui\\icon.png");
 
@@ -36,26 +39,32 @@ public class SystemTray {
 		if (systemTray != null){
 			TrayItem item = new TrayItem(systemTray, SWT.NONE);
 			item.setToolTipText("sblit 0.0");
-//			item.addListener(SWT.Show, new Listener() {
-//				public void handleEvent(Event event) {
-//					System.out.println("Show Event");
-//				}
-//			});;
-//			item.addListener(SWT.Hide, new Listener() {
-//				public void handleEvent(Event event) {
-//					System.out.println("hide");
-//				}
-//			});
-//			item.addListener(SWT.Selection, new Listener() {
-//				public void handleEvent(Event event) {
-//					System.out.println("selection");
-//				}
-//			});
-//			item.addListener(SWT.DefaultSelection, new Listener() {
-//				public void handleEvent(Event event) {
-//					System.out.println("default selection");
-//				}
-//			});
+			item.addListener(SWT.Show, new Listener() {
+				public void handleEvent(Event event) {
+					System.out.println("Show Event");
+				}
+			});;
+			item.addListener(SWT.Hide, new Listener() {
+				public void handleEvent(Event event) {
+					System.out.println("hide");
+				}
+			});
+			item.addListener(SWT.Selection, new Listener() {
+				public void handleEvent(Event event) {
+					gui.open();
+				}
+			});
+			item.addListener(SWT.DefaultSelection, new Listener() {
+				public void handleEvent(Event event) {
+					try {
+//						Desktop.getDesktop().open(Configuration.getSblitDirectory());
+						Desktop.getDesktop().open(new File("C:\\Users\\Andi\\Dropbox"));
+					} catch (Exception e) {
+						e.printStackTrace();
+						//TODO open a textnote saying, that there is no sblit directory configured yet.
+					}
+				}
+			});
 			
 			final Menu menu = new Menu(shell, SWT.POP_UP);
 			MenuItem configurationMenuItem = new MenuItem(menu, SWT.PUSH);
@@ -63,13 +72,6 @@ public class SystemTray {
 			configurationMenuItem.addListener(SWT.Selection, new Listener() {
 				public void handleEvent(Event event) {
 					configurationDialog.open();
-				}
-			});
-			MenuItem printItem = new MenuItem(menu, SWT.PUSH);
-			printItem.setText("Print Status (Testing)");
-			printItem.addListener(SWT.Selection, new Listener() {
-				public void handleEvent(Event event) {
-					System.out.println(configurationDialog.getConfigShell().isDisposed());
 				}
 			});
 			MenuItem export = new MenuItem (menu, SWT.PUSH);
@@ -84,9 +86,8 @@ public class SystemTray {
 					saveKeyDialog.open();
 					try {
 						new BufferedWriter(new FileWriter(saveKeyDialog.getFileName())).write("" +	Configuration.getKey().toString());
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
+					} catch (Exception ex) {
+//						ex.printStackTrace();
 					}
 				}
 			});
