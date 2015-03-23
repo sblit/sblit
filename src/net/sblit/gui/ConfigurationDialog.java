@@ -39,7 +39,9 @@ public class ConfigurationDialog{
 	Shell configShell;
 	String[] receivers;
 	File dataDirectory;
-	boolean configSaved = true; //TODO implement that shit
+	boolean ReceiverConfigSaved  = true; //TODO implement that shit
+	boolean PartnerConfigSaved   = true; //TODO implement that shit
+	boolean DirectoryConfigSaved = true; //TODO implement that shit
 
 	public ConfigurationDialog(){
 		this.configShell = new Shell (Display.getCurrent());
@@ -53,7 +55,7 @@ public class ConfigurationDialog{
 		configShell.addListener (SWT.Close, new Listener () {
 			@Override
 			public void handleEvent (Event event) {
-				if (configSaved == false){
+				if (ReceiverConfigSaved == false || PartnerConfigSaved == false || DirectoryConfigSaved == false){
 					int style = SWT.APPLICATION_MODAL | SWT.YES | SWT.NO;
 					MessageBox messageBox = new MessageBox (configShell, style);
 					messageBox.setText ("Alert");
@@ -111,7 +113,7 @@ public class ConfigurationDialog{
 	}
 
 	public void close(){
-		configShell.setVisible(false);
+		configShell.close();
 	}
 
 	private void drawquitBtns(Composite parent) {
@@ -121,7 +123,17 @@ public class ConfigurationDialog{
 		{
 			@Override public void widgetSelected(final SelectionEvent e)
 			{
-				close();
+				if (ReceiverConfigSaved == false || PartnerConfigSaved == false || DirectoryConfigSaved == false){
+					int style = SWT.APPLICATION_MODAL | SWT.YES | SWT.NO;
+					MessageBox messageBox = new MessageBox (configShell, style);
+					messageBox.setText ("Alert");
+					messageBox.setMessage ("You have unsaved changes. Do you want to continue anyway?");
+					if(messageBox.open () == SWT.YES){
+						close();
+					}
+				} else {
+					close();
+				}
 			}
 		});
 		GridData layoutData = new GridData(SWT.LEFT, SWT.BOTTOM, false, false, 1, 1);
@@ -129,8 +141,28 @@ public class ConfigurationDialog{
 
 		Button saveBtn = new Button(parent, SWT.PUSH);
 		saveBtn.setText("Save Changes");
+		saveBtn.addSelectionListener(new SelectionAdapter()
+		{
+			@Override public void widgetSelected(final SelectionEvent e)
+			{
+				if (ReceiverConfigSaved == false){
+					
+				}
+				if (PartnerConfigSaved == false){
+					
+				}
+				if (DirectoryConfigSaved == false){
+					
+				}
+				close();
+			}
+		});
 		layoutData = new GridData(SWT.RIGHT, SWT.BOTTOM, false, false, 1, 1);
 		saveBtn.setLayoutData(layoutData);		
+	}
+	
+	private void writeTableToFile(Table table, File file){
+		
 	}
 
 	private void drawDirectoryGroup(Group parent) {
@@ -188,9 +220,9 @@ public class ConfigurationDialog{
 		layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
 		receiverTable.setLayoutData(layoutData);
 
-		Button editBtn = new Button(parent, SWT.PUSH);
-		editBtn.setText("Edit");
-		editBtn.addSelectionListener(new SelectionAdapter()
+		Button editReceiverBtn = new Button(parent, SWT.PUSH);
+		editReceiverBtn.setText("Edit");
+		editReceiverBtn.addSelectionListener(new SelectionAdapter()
 		{
 			@Override public void widgetSelected(final SelectionEvent e)
 			{
@@ -198,10 +230,17 @@ public class ConfigurationDialog{
 			}
 		});
 		layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
-		editBtn.setLayoutData(layoutData);
+		editReceiverBtn.setLayoutData(layoutData);
 
 		Button addReceiverBtn = new Button(parent, SWT.PUSH);
 		addReceiverBtn.setText("Add");
+		addReceiverBtn.addSelectionListener(new SelectionAdapter()
+		{
+			@Override public void widgetSelected(final SelectionEvent e)
+			{
+				addReceiver(receiverTable);
+			}
+		});
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, true, false, 1, 1);
 		addReceiverBtn.setLayoutData(layoutData);
 
@@ -213,6 +252,7 @@ public class ConfigurationDialog{
 	
 	private void editReceiver(Table receiverTable){
 		String[] input = new String[2];
+		try{
 		TableItem selection = receiverTable.getSelection()[0];
 		String oldHost = selection.getText(0).toString();
 		String oldKey  = selection.getText(1).toString();					
@@ -223,9 +263,36 @@ public class ConfigurationDialog{
 		String newHost = input[0];
 		String newKey = input[1];
 		if(oldHost!=newHost && oldKey!=newKey){
-			configSaved = false;
+			ReceiverConfigSaved = false;
 			selection.setText(0, newHost);
+			
 			selection.setText(1, newKey);
+		}
+		} catch(ArrayIndexOutOfBoundsException ex){
+			// No Row Selected
+		}
+	}
+	
+	private void addReceiver(Table receiverTable){
+		String[] input = new String[2];
+		try{
+		TableItem selection = receiverTable.getSelection()[0];
+		String oldHost = selection.getText(0).toString();
+		String oldKey  = selection.getText(1).toString();					
+		StringInputDialog receiverDialog = new StringInputDialog();
+		receiverDialog.setMessage("Edit the receiver.  Format: hostname;publicKey");
+		receiverDialog.setInput(oldHost + ";" + oldKey);
+		input = receiverDialog.open();
+		String newHost = input[0];
+		String newKey = input[1];
+		if(oldHost!=newHost && oldKey!=newKey){
+			ReceiverConfigSaved = false;
+			selection.setText(0, newHost);
+			
+			selection.setText(1, newKey);
+		}
+		} catch(ArrayIndexOutOfBoundsException ex){
+			// No Row Selected
 		}
 	}
 

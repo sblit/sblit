@@ -26,7 +26,7 @@ public class StringInputDialog{
 	public String[] open() {
 		drawContent();
 		inputDialogShell.open();
-		inputDialogShell.pack();
+		inputDialogShell.setBounds(10, 10, 300, 130);
 		
 		while (!inputDialogShell.isDisposed()) {
 			if (!display.readAndDispatch())
@@ -50,7 +50,7 @@ public class StringInputDialog{
 		inputField.setText(input);
 		layoutData = new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1);
 		inputField.setLayoutData(layoutData);
-		inputField.setSelection(0,input.length());
+		inputField.setSelection(0);
 		
 		final Button okBtn = new Button(inputDialogShell, SWT.PUSH);
 		okBtn.setText("OK");
