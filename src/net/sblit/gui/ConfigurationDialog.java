@@ -1,14 +1,22 @@
 package net.sblit.gui;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 
+import net.sblit.configuration.Configuration;
+
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
@@ -19,8 +27,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
-
-import net.sblit.configuration.Configuration;
 
 /**
  * Draws the configuration-dialog. At this GUI
@@ -33,23 +39,23 @@ public class ConfigurationDialog{
 	Shell configShell;
 	String[] receivers;
 	File dataDirectory;
-	boolean configSaved = true;
+	boolean ReceiverConfigSaved  = true; //TODO implement that shit
+	boolean PartnerConfigSaved   = true; //TODO implement that shit
+	boolean DirectoryConfigSaved = true; //TODO implement that shit
 
-	public ConfigurationDialog(Shell parentShell){
-		this.configShell = new Shell (parentShell);
+	public ConfigurationDialog(){
+		this.configShell = new Shell (Display.getCurrent());
+		create();
 	}
-	
-	public void open(){
-		//configShell.
-		// TODO getReceivers wirft NullPointerException --> momentan wird ein dummyarray benutzt
-		// receivers = configuration.getReceivers();
+
+	public void create(){
 		configShell.setText("Configuration");
 
 		// Adds a prompt for closing configuration-gui without saving
 		configShell.addListener (SWT.Close, new Listener () {
 			@Override
 			public void handleEvent (Event event) {
-				if (configSaved == false){
+				if (ReceiverConfigSaved == false || PartnerConfigSaved == false || DirectoryConfigSaved == false){
 					int style = SWT.APPLICATION_MODAL | SWT.YES | SWT.NO;
 					MessageBox messageBox = new MessageBox (configShell, style);
 					messageBox.setText ("Alert");
@@ -58,7 +64,7 @@ public class ConfigurationDialog{
 				}
 			}
 		});
-		
+
 		GridLayout layout = new GridLayout(2, false);
 		configShell.setLayout(layout);
 
@@ -68,7 +74,7 @@ public class ConfigurationDialog{
 		receiverGroup.setLayoutData(layoutData);
 		layout = new GridLayout(3, false);
 		receiverGroup.setLayout(layout);
-		
+
 		Group partnerGroup = new Group(configShell, 0);
 		partnerGroup.setText("Partner");
 		layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1);
@@ -98,38 +104,93 @@ public class ConfigurationDialog{
 		drawPartnerGroup(partnerGroup);
 		drawDirectoryGroup(directoryGroup);
 		drawquitBtns(quitBtns);
-		
-//		centerShell(shell, display);
-		
+
 		configShell.pack();
+	}
+
+	public void open(){
 		configShell.open();
 	}
 
-	private static void drawquitBtns(Composite parent) {
+	public void close(){
+		configShell.close();
+	}
+
+	private void drawquitBtns(Composite parent) {
 		Button cancelBtn = new Button(parent, SWT.PUSH);
 		cancelBtn.setText("Cancel");
+		cancelBtn.addSelectionListener(new SelectionAdapter()
+		{
+			@Override public void widgetSelected(final SelectionEvent e)
+			{
+				if (ReceiverConfigSaved == false || PartnerConfigSaved == false || DirectoryConfigSaved == false){
+					int style = SWT.APPLICATION_MODAL | SWT.YES | SWT.NO;
+					MessageBox messageBox = new MessageBox (configShell, style);
+					messageBox.setText ("Alert");
+					messageBox.setMessage ("You have unsaved changes. Do you want to continue anyway?");
+					if(messageBox.open () == SWT.YES){
+						close();
+					}
+				} else {
+					close();
+				}
+			}
+		});
 		GridData layoutData = new GridData(SWT.LEFT, SWT.BOTTOM, false, false, 1, 1);
 		cancelBtn.setLayoutData(layoutData);
 
 		Button saveBtn = new Button(parent, SWT.PUSH);
 		saveBtn.setText("Save Changes");
+		saveBtn.addSelectionListener(new SelectionAdapter()
+		{
+			@Override public void widgetSelected(final SelectionEvent e)
+			{
+				if (ReceiverConfigSaved == false){
+					
+				}
+				if (PartnerConfigSaved == false){
+					
+				}
+				if (DirectoryConfigSaved == false){
+					
+				}
+				close();
+			}
+		});
 		layoutData = new GridData(SWT.RIGHT, SWT.BOTTOM, false, false, 1, 1);
 		saveBtn.setLayoutData(layoutData);		
 	}
+	
+	private void writeTableToFile(Table table, File file){
+		
+	}
 
-	private static void drawDirectoryGroup(Group parent) {
-		Label directoryPathLbl = new Label(parent, 0);
-		directoryPathLbl.setText("C:\\Users\\Admin\\sblit");
+	private void drawDirectoryGroup(Group parent) {
+		final Label directoryPathLbl = new Label(parent, 0);
+		try {
+			directoryPathLbl.setText(Configuration.getSblitDirectory().toString());
+		} catch (NullPointerException e){
+			directoryPathLbl.setText("No Directory set.");
+		}
 		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
 		directoryPathLbl.setLayoutData(layoutData);
 
 		Button selectBtn = new Button(parent, SWT.PUSH);
 		selectBtn.setText("Select");
+		selectBtn.addSelectionListener(new SelectionAdapter()
+		{
+			@Override public void widgetSelected(final SelectionEvent e)
+			{
+				DirectoryDialog dirDialog = new DirectoryDialog(configShell);
+				dirDialog.open();
+				directoryPathLbl.setText(dirDialog.getFilterPath().toString());
+			}
+		});
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
 		selectBtn.setLayoutData(layoutData);
 	}
 
-	private static void drawReceiverGroup(Group parent) {
+	private void drawReceiverGroup(Group parent) {
 		Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
 		receiverFileStateLbl.setText("");
 		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
@@ -154,18 +215,32 @@ public class ConfigurationDialog{
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
 		exportBtn.setLayoutData(layoutData);
 
-		Table receiverTable = new Table(parent, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
-		fillReceiverTable(receiverTable, true);
+		final Table receiverTable = new Table(parent, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
+		fillReceiverTable(receiverTable, dummyReceiverHashMap());
 		layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
 		receiverTable.setLayoutData(layoutData);
 
-		Button editBtn = new Button(parent, SWT.PUSH);
-		editBtn.setText("Edit");
+		Button editReceiverBtn = new Button(parent, SWT.PUSH);
+		editReceiverBtn.setText("Edit");
+		editReceiverBtn.addSelectionListener(new SelectionAdapter()
+		{
+			@Override public void widgetSelected(final SelectionEvent e)
+			{
+				editReceiver(receiverTable);
+			}
+		});
 		layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
-		editBtn.setLayoutData(layoutData);
+		editReceiverBtn.setLayoutData(layoutData);
 
 		Button addReceiverBtn = new Button(parent, SWT.PUSH);
 		addReceiverBtn.setText("Add");
+		addReceiverBtn.addSelectionListener(new SelectionAdapter()
+		{
+			@Override public void widgetSelected(final SelectionEvent e)
+			{
+				addReceiver(receiverTable);
+			}
+		});
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, true, false, 1, 1);
 		addReceiverBtn.setLayoutData(layoutData);
 
@@ -175,7 +250,58 @@ public class ConfigurationDialog{
 		removeReceiverBtn.setLayoutData(layoutData);
 	}
 	
-	private static void drawPartnerGroup(Group parent) {
+	private void editReceiver(Table receiverTable){
+		String[] input = new String[2];
+		try{
+		TableItem selection = receiverTable.getSelection()[0];
+		String oldHost = selection.getText(0).toString();
+		String oldKey  = selection.getText(1).toString();					
+		StringInputDialog receiverDialog = new StringInputDialog();
+		receiverDialog.setMessage("Edit the receiver.  Format: hostname;publicKey");
+		receiverDialog.setInput(oldHost + ";" + oldKey);
+		input = receiverDialog.open();
+		String newHost = input[0];
+		String newKey = input[1];
+		if(oldHost!=newHost && oldKey!=newKey){
+			ReceiverConfigSaved = false;
+			selection.setText(0, newHost);
+			
+			selection.setText(1, newKey);
+		}
+		} catch(ArrayIndexOutOfBoundsException ex){
+			// No Row Selected
+		}
+	}
+	
+	private void addReceiver(Table receiverTable){
+		String[] input = new String[2];
+		try{
+		TableItem selection = receiverTable.getSelection()[0];
+		String oldHost = selection.getText(0).toString();
+		String oldKey  = selection.getText(1).toString();					
+		StringInputDialog receiverDialog = new StringInputDialog();
+		receiverDialog.setMessage("Edit the receiver.  Format: hostname;publicKey");
+		receiverDialog.setInput(oldHost + ";" + oldKey);
+		input = receiverDialog.open();
+		String newHost = input[0];
+		String newKey = input[1];
+		if(oldHost!=newHost && oldKey!=newKey){
+			ReceiverConfigSaved = false;
+			selection.setText(0, newHost);
+			
+			selection.setText(1, newKey);
+		}
+		} catch(ArrayIndexOutOfBoundsException ex){
+			// No Row Selected
+		}
+	}
+
+	private boolean checkInput(String[] input){
+		//TODO Implement the checking method
+		return true;
+	}
+
+	private void drawPartnerGroup(Group parent) {
 		Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
 		receiverFileStateLbl.setText("");
 		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1);
@@ -203,39 +329,53 @@ public class ConfigurationDialog{
 		removeReceiverBtn.setLayoutData(layoutData);
 	}
 
-	private static void fillReceiverTable(Table table, boolean insertDummyData) {
-		if (insertDummyData){
-			table.setLinesVisible (true);
-			table.setHeaderVisible (true);
-			
-			TableColumn hostnameColumn = new TableColumn(table, SWT.LEFT);
-			hostnameColumn.setText("Hostname");
+	private void fillReceiverTable(Table table, HashMap<String, String> receivers) {
+		table.setLinesVisible (true);
+		table.setHeaderVisible (true);
 
-			TableColumn keyColumn = new TableColumn(table, SWT.LEFT);
-			keyColumn.setText("Public Key");
-			
-			String[] hostnames = {"Laptop","Desktop", "Arbeit", "Opa-PC"};
-			int n = 4;
-			TableItem item;
-			for(int i = 0; i < n; i++) {
-				item = new TableItem(table, SWT.NONE);
-				item.setText(0, hostnames[i]);
-				item.setText(1, getRandomHexString(40));
-			}
-			table.getColumn(0).pack();
-			table.getColumn(1).pack();
+		TableColumn hostnameColumn = new TableColumn(table, SWT.LEFT);
+		hostnameColumn.setText("Hostname");
+
+		TableColumn keyColumn = new TableColumn(table, SWT.LEFT);
+		keyColumn.setText("Public Key");
+
+		TableItem item = null;;
+
+		for (Map.Entry<String, String> entry : receivers.entrySet())
+		{
+			item = new TableItem(table, SWT.NONE);
+			item.setText(0, "" + entry.getKey());
+			item.setText(1, "" + entry.getValue());
 		}
+
+		table.getColumn(0).pack();
+		table.getColumn(1).pack();
 	}
-	
-	private static void fillPartnerTable(Table table, boolean insertDummyData) {
+
+	/**
+	 * 
+	 * @return A {HashMap} with 4 rows of dummy data (hostname - rnd key)
+	 */
+	private HashMap<String, String> dummyReceiverHashMap() {
+		HashMap<String, String> hashMap = new HashMap<>();
+		String[] hostnames = {"Laptop","Desktop", "Arbeit", "Opa-PC"};
+
+		for(String s : hostnames) {
+			hashMap.put(s, getRandomHexString(40));
+		}
+		System.out.println(hashMap.toString());
+		return hashMap;
+	}
+
+	private void fillPartnerTable(Table table, boolean insertDummyData) {
 		if (insertDummyData){
 			table.setLinesVisible (true);
 			table.setHeaderVisible (true);
 
 			TableColumn keyColumn = new TableColumn(table, SWT.LEFT);
 			keyColumn.setText("Public Key");
-			
-			int n = 30;
+
+			int n = 10;
 			TableItem item;
 			for(int i = 0; i < n; i++) {
 				item = new TableItem(table, SWT.NONE);
@@ -243,27 +383,28 @@ public class ConfigurationDialog{
 			}
 			table.getColumn(0).pack();
 		}
+
 	}
 
-	private static String getRandomHexString(int numchars){
-        Random r = new Random();
-        StringBuffer sb = new StringBuffer();
-        while(sb.length() < numchars){
-            sb.append(Integer.toHexString(r.nextInt()));
-        }
+	private String getRandomHexString(int numchars){
+		Random r = new Random();
+		StringBuffer sb = new StringBuffer();
+		while(sb.length() < numchars){
+			sb.append(Integer.toHexString(r.nextInt()));
+		}
 
-        return sb.toString().substring(0, numchars);
-    }
-	
+		return sb.toString().substring(0, numchars);
+	}
+
 	public Shell getConfigShell(){
 		return configShell;
 	}
 
-	private static void centerShell(Shell shell, Display display) {
+	private void centerShell(Shell shell, Display display) {
 		Rectangle bounds = display.getBounds();
 		int width = 600;
 		int height = 450;
-		
+
 		shell.setBounds((bounds.width-width)/2, (bounds.height-height)/2, width, height);;
 	}
 }
