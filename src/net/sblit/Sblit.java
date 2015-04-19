@@ -29,22 +29,28 @@ public class Sblit {
 		Configuration.initialize();
 		System.out.println(new Configuration().toString());
 
-		// TODO Share public key
+		// new Thread(new Runnable() {
+		//
+		// @Override
+		// public void run() {
+		// new SystemTray();
+		// }
+		// }).start();
 
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				SblitMessage message = new SblitMessage();
-				while (true) {
 					DirectoryWatcher directoryWatcher = new DirectoryWatcher(
 							Configuration.getSblitDirectory(), new File(Configuration
 									.getConfigurationDirectory().toString()
 									+ Configuration.LOG_FILE), new String(Configuration.getKey()));
+				while (true) {
 					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+						directoryWatcher.waitForChanges();
+					} catch (InterruptedException | IOException e1) {
+						e1.printStackTrace();
 					}
 					for (File f : directoryWatcher.getFilesToPush()) {
 						System.out.println(f.getAbsolutePath());
@@ -56,7 +62,11 @@ public class Sblit {
 							hashes = DirectoryWatcher.getLogs().get(path);
 							message.set(SblitMessage.FILE_REQUEST);
 							message.fileRequest.path.setString(path);
-							message.fileRequest.hashes.setElements(hashes);
+							try {
+								message.fileRequest.hashes.setElements(hashes);
+							} catch (NullPointerException e) {
+								message.fileRequest.hashes.setElements(new LinkedList<Data>());
+							}
 							for (Data channel : Configuration.getChannels()) {
 								try {
 									new StreamByteBuf(Configuration.getChannel(channel)

@@ -14,6 +14,7 @@ import org.bouncycastle.crypto.paddings.BlockCipherPadding;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.paddings.ZeroBytePadding;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.dclayer.net.Data;
 
 /**
  * 
@@ -75,6 +76,14 @@ public class SymmetricEncryption {
 	 */
 	public byte[] decrypt(byte[] encrypted){
 		return process(encrypted, false);
+	}
+	
+	public Data encrypt(Data decrypted){
+		return new Data(encrypt(decrypted.getData()));
+	}
+	
+	public Data decrypt(Data encrypted){
+		return new Data(encrypt(encrypted.getData()));
 	}
 	
 	

@@ -8,7 +8,6 @@ import org.dclayer.application.NetworkEndpointActionListener;
 import org.dclayer.application.networktypeslotmap.NetworkEndpointSlot;
 import org.dclayer.crypto.key.Key;
 import org.dclayer.net.Data;
-import org.dclayer.net.llacache.LLA;
 
 /**
  * 
@@ -26,6 +25,11 @@ public class Receiver implements NetworkEndpointActionListener {
 	public void onJoin(NetworkEndpointSlot networkEndpointSlot, Data ownAddressData) {
 		System.out.println(String.format("joined: %s, local address: %s", networkEndpointSlot,
 				ownAddressData));
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		for (Data partner : Configuration.getReceivers()) {
 			//System.out.println(new String(partner.getData()));
 			Configuration.getApp().requestApplicationChannel(networkEndpointSlot,
@@ -41,9 +45,10 @@ public class Receiver implements NetworkEndpointActionListener {
 	}
 
 	@Override
-	public ApplicationChannelActionListener onApplicationChannelRequest(
+	public org.dclayer.application.applicationchannel.ApplicationChannelActionListener onApplicationChannelRequest(
 			NetworkEndpointSlot networkEndpointSlot, Key remotePublicKey, String actionIdentifier,
-			LLA remoteLLA) {
+			org.dclayer.net.lla.LLA remoteLLA) {
+		System.out.println("reqested");
 		if (Configuration.getReceiversAndNames().containsKey(remotePublicKey.toData())) {
 			return new ApplicationChannelActionListener();
 		} else {

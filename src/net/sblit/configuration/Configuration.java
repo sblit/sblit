@@ -45,6 +45,7 @@ public class Configuration {
 	private static HashMap<Data, ApplicationChannel> unauthorizedChannels = new HashMap<>();
 	
 	public static String slash;
+	public static String otherSlash;
 
 	// private String receivers;
 
@@ -60,9 +61,11 @@ public class Configuration {
 		if (os.contains("Windows")) {
 			configurationDirectory = new File(System.getenv("APPDATA") + "/SBLIT/");
 			slash = "\\";
+			otherSlash = "/";
 		} else {
 			configurationDirectory = new File(".SBLIT/");
 			slash = "/";
+			otherSlash = "\\";
 		}
 		configurationDirectory.mkdir();
 		AddressConfiguration addressConfiguration = new AddressConfiguration(

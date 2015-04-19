@@ -6,7 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,17 +24,22 @@ public class ReceiverConfiguration {
 	private HashSet<String> activeReceivers = new HashSet<String>();
 
 	public ReceiverConfiguration(String configurationDirectory) {
-		receiverFile = new File(configurationDirectory + RECEIVER_PATH);
+		receiverFile = new File(configurationDirectory
+				+ RECEIVER_PATH);
 		if (receiverFile.exists()) {
 			try {
-				String[] receivers = new String(Files.readAllBytes(Paths.get(receiverFile
-						.getAbsolutePath()))).split(",");
+				String[] receivers = new String(
+						Files.readAllBytes(Paths
+								.get(receiverFile
+										.getAbsolutePath())))
+						.split(",");
 				for (String receiver : receivers) {
 					String[] temp = receiver.split("=");
 					this.receivers.put(temp[0], temp[1]);
 				}
 			} catch (Exception e) {
-				System.out.println("Keine Receiver eingetragen!");
+				System.out
+						.println("Keine Receiver eingetragen!");
 			}
 		} else {
 			try {
@@ -41,17 +48,22 @@ public class ReceiverConfiguration {
 				e.printStackTrace();
 			}
 		}
-		foreignReceiverFile = new File(configurationDirectory + FOREIGN_RECEIVER_PATH);
+		foreignReceiverFile = new File(configurationDirectory
+				+ FOREIGN_RECEIVER_PATH);
 		if (foreignReceiverFile.exists()) {
 			try {
-				String[] receivers = new String(Files.readAllBytes(Paths.get(foreignReceiverFile
-						.getAbsolutePath()))).split(",");
+				String[] receivers = new String(
+						Files.readAllBytes(Paths
+								.get(foreignReceiverFile
+										.getAbsolutePath())))
+						.split(",");
 				for (String receiver : receivers) {
 					String[] temp = receiver.split("=");
 					this.foreignReceivers.put(temp[0], temp[1]);
 				}
 			} catch (Exception e) {
-				System.out.println("Keine fremden Receiver eingetragen!");
+				System.out
+						.println("Keine fremden Receiver eingetragen!");
 			}
 		} else {
 			try {
@@ -72,18 +84,17 @@ public class ReceiverConfiguration {
 
 	void addReceiver(String name, String receiver) {
 		receivers.put(receiver, name);
-		
+
 		updateFile(receiverFile, receivers);
 	}
 
-	private synchronized void updateFile(File file, Map<String, String> receivers) {
+	private synchronized void updateFile(File file,
+			Map<String, String> receivers) {
 		try {
-			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
-					receiverFile)));
 			String temp = receivers.toString();
 			temp = temp.substring(1, temp.length() - 1);
-			bw.write(temp);
-			bw.close();
+			Files.write(file.toPath(), temp.getBytes(),
+					StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -99,15 +110,17 @@ public class ReceiverConfiguration {
 		updateFile(foreignReceiverFile, foreignReceivers);
 	}
 
-	void addForeignReceiver(String name, String receiver, boolean active) {
+	void addForeignReceiver(String name, String receiver,
+			boolean active) {
 		foreignReceivers.put(receiver, name);
-		if(active)
+		//TODO nicht nur temporär
+		if (active)
 			activeReceivers.add(receiver);
 		updateFile(foreignReceiverFile, foreignReceivers);
 	}
-	
-	boolean checkActiveReceiver(String receiver){
-		if(activeReceivers.contains(receiver))
+
+	boolean checkActiveReceiver(String receiver) {
+		if (activeReceivers.contains(receiver))
 			return true;
 		return false;
 	}

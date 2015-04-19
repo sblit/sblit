@@ -15,7 +15,9 @@ import java.util.Map;
 import net.sblit.configuration.Configuration;
 import net.sblit.directoryWatcher.DirectoryWatcher;
 
+import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.net.Data;
+import org.dclayer.net.buf.StreamByteBuf;
 
 public class FileWriter {
 	private String path;
@@ -43,8 +45,14 @@ public class FileWriter {
 		try {
 			changeLogs(logs, filePath, synchronizedDevices);
 			System.out.println("File content: " + file.represent());
-			Files.write(Paths.get(Configuration.getSblitDirectory() + Configuration.slash + filePath), file.getData());
-		} catch (IOException e) {
+			System.out.println("Ins file: " + new String(file.getData()));
+			if(filePath.lastIndexOf(Configuration.slash) > 0)
+				new File(Configuration.getSblitDirectory() + Configuration.slash + filePath.substring(0, filePath.lastIndexOf(Configuration.slash))).mkdirs();
+			FileOutputStream buf = new FileOutputStream(Configuration.getSblitDirectory() + Configuration.slash + filePath);
+			file.write(new StreamByteBuf(buf));
+			buf.close();
+			
+		} catch (IOException | BufException e) {
 			e.printStackTrace();
 		}
 	}
