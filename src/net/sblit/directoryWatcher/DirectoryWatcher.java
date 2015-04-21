@@ -113,58 +113,60 @@ public class DirectoryWatcher {
 			File file = new File(dir + Configuration.slash + event.context().toString());
 			String relativePath = file.getAbsolutePath()
 					.replace(Configuration.getSblitDirectory().getAbsolutePath(), "").substring(1);
-			if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-				LinkedList<Data> hashes = new LinkedList<>();
-				if (!file.isDirectory()) {
-					byte[] fileContent = Files.readAllBytes(file.toPath());
-					// �berpr�ft, was mit dem File passiert ist
-					Data hash = Crypto.sha1(new Data(fileContent));
-					hashes.add(hash);
-					files.put(relativePath, hashes);
-					LinkedList<Data> synchronizedDevice = new LinkedList<>();
-					synchronizedDevice.add(Configuration.getPublicAddressKey().toData());
-					synchronizedDevices.put(relativePath, synchronizedDevice);
-				} else {
-					registerAll(Configuration.getSblitDirectory().toPath());
-				}
-				filesToPush = refreshFilesArray(filesToPush, file);
-			} else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
-				files.remove(relativePath);
-				if (file.isDirectory()) {
-					registerAll(Configuration.getSblitDirectory().toPath());
-				}
-				filesToDelete = refreshFilesArray(filesToDelete, file);
-			} else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-				LinkedList<Data> hashes = files.get(relativePath);
-				if (hashes == null)
-					hashes = new LinkedList<>();
-				boolean needToSend = true;
-				if (!file.isDirectory()) {
-					byte[] fileContent = Files.readAllBytes(file.toPath());
-					// �berpr�ft, was mit dem File passiert ist
-					Data hash = Crypto.sha1(new Data(fileContent));
-					needToSend = !hashes.contains(hash);
-					hashes.add(hash);
-				} else {
-					registerAll(Configuration.getSblitDirectory().toPath());
-				}
-				// Ueberprueft, ob ein User die Aenderung vorgenommen
-				// hat, oder
-				// das
-				// File synchronisiert wurde bzw. ob sich �berhaupt etwas
-				// ge�ndert hat
-				if (!needToSend) {
-					// File was edited by sblit
-
-				} else {
+			if (relativePath.lastIndexOf(Configuration.slash) >= relativePath.lastIndexOf(".sblit.")) {
+				if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
+					LinkedList<Data> hashes = new LinkedList<>();
+					if (!file.isDirectory()) {
+						byte[] fileContent = Files.readAllBytes(file.toPath());
+						// �berpr�ft, was mit dem File passiert ist
+						Data hash = Crypto.sha1(new Data(fileContent));
+						hashes.add(hash);
+						files.put(relativePath, hashes);
+						LinkedList<Data> synchronizedDevice = new LinkedList<>();
+						synchronizedDevice.add(Configuration.getPublicAddressKey().toData());
+						synchronizedDevices.put(relativePath, synchronizedDevice);
+					} else {
+						registerAll(Configuration.getSblitDirectory().toPath());
+					}
 					filesToPush = refreshFilesArray(filesToPush, file);
-					LinkedList<Data> synchronizedDevice = new LinkedList<>();
-					synchronizedDevice.add(Configuration.getPublicAddressKey().toData());
-					synchronizedDevices.put(relativePath, synchronizedDevice);
+				} else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
+					files.remove(relativePath);
+					if (file.isDirectory()) {
+						registerAll(Configuration.getSblitDirectory().toPath());
+					}
+					filesToDelete = refreshFilesArray(filesToDelete, file);
+				} else if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
+					LinkedList<Data> hashes = files.get(relativePath);
+					if (hashes == null)
+						hashes = new LinkedList<>();
+					boolean needToSend = true;
+					if (!file.isDirectory()) {
+						byte[] fileContent = Files.readAllBytes(file.toPath());
+						// �berpr�ft, was mit dem File passiert ist
+						Data hash = Crypto.sha1(new Data(fileContent));
+						needToSend = !hashes.contains(hash);
+						hashes.add(hash);
+					} else {
+						registerAll(Configuration.getSblitDirectory().toPath());
+					}
+					// Ueberprueft, ob ein User die Aenderung vorgenommen
+					// hat, oder
+					// das
+					// File synchronisiert wurde bzw. ob sich �berhaupt etwas
+					// ge�ndert hat
+					if (!needToSend) {
+						// File was edited by sblit
+
+					} else {
+						filesToPush = refreshFilesArray(filesToPush, file);
+						LinkedList<Data> synchronizedDevice = new LinkedList<>();
+						synchronizedDevice.add(Configuration.getPublicAddressKey().toData());
+						synchronizedDevices.put(relativePath, synchronizedDevice);
+					}
+					;
 				}
-				;
+				System.out.println("Kontext: " + relativePath);
 			}
-			System.out.println("Kontext: " + relativePath);
 		}
 		watchKey.reset();
 		logFile.createNewFile();

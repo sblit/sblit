@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -38,58 +39,75 @@ public class FileWriter {
 	 * @param filePath
 	 *            Path of the File
 	 */
-	
-	//TODO bei gelegenheit aufräumen
-	public FileWriter(LinkedList<Data> logs, Data file, String filePath, LinkedList<Data> synchronizedDevices){
+
+	// TODO bei gelegenheit aufräumen
+	public FileWriter(LinkedList<Data> logs, Data file, String filePath,
+			LinkedList<Data> synchronizedDevices) {
 		fileWriters.add(this);
 		try {
 			changeLogs(logs, filePath, synchronizedDevices);
-			System.out.println("File content: " + file.represent());
-			System.out.println("Ins file: " + new String(file.getData()));
-			if(filePath.lastIndexOf(Configuration.slash) > 0)
-				new File(Configuration.getSblitDirectory() + Configuration.slash + filePath.substring(0, filePath.lastIndexOf(Configuration.slash))).mkdirs();
-			FileOutputStream buf = new FileOutputStream(Configuration.getSblitDirectory() + Configuration.slash + filePath);
+			String path = Configuration.getSblitDirectory().getAbsolutePath() + Configuration.slash;
+			if (filePath.lastIndexOf(Configuration.slash) >= 0) {
+				path += filePath.substring(0, filePath.lastIndexOf(Configuration.slash));
+				new File(path).mkdirs();
+				path += Configuration.slash + Configuration.TEMP_FILE_START
+						+ filePath.substring(filePath.lastIndexOf(Configuration.slash) + 1);
+			} else {
+				path += Configuration.TEMP_FILE_START + filePath;
+			}
+
+			System.out.println("temp path: " + path);
+
+			FileOutputStream buf = new FileOutputStream(path);
 			file.write(new StreamByteBuf(buf));
 			buf.close();
-			
+			Files.move(
+					Paths.get(path),
+					Paths.get(Configuration.getSblitDirectory().getAbsolutePath()
+							+ Configuration.slash + filePath), StandardCopyOption.ATOMIC_MOVE,
+					StandardCopyOption.REPLACE_EXISTING);
+
 		} catch (IOException | BufException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	private synchronized void changeLogs(LinkedList<Data> hashes, String filePath, LinkedList<Data> synchronizedDevices) throws IOException{
+
+	private synchronized void changeLogs(LinkedList<Data> hashes, String filePath,
+			LinkedList<Data> synchronizedDevices) throws IOException {
 		HashMap<String, LinkedList<Data>> logs = DirectoryWatcher.getLogs();
 		logs.remove(filePath);
 		LinkedList<Data> log = new LinkedList<Data>();
-		for(Data hash: hashes)
+		for (Data hash : hashes)
 			log.add(hash);
 		logs.put(filePath, log);
 		HashMap<String, LinkedList<Data>> devices = DirectoryWatcher.getSynchronizedDevices();
 		devices.remove(filePath);
 		LinkedList<Data> device = new LinkedList<>();
-		for(Data temp : synchronizedDevices){
+		for (Data temp : synchronizedDevices) {
 			device.add(temp);
 		}
 		devices.put(filePath, device);
 		String s = "";
-		for(String path:logs.keySet()){
+		for (String path : logs.keySet()) {
 			s += ", " + path + "=";
 			String temp = "";
-			for(Data data : logs.get(path)){
+			for (Data data : logs.get(path)) {
 				temp += "," + data.toString();
 			}
 			s += temp.substring(1) + ";";
 			temp = "";
-			for(Data data : devices.get(path)){
+			for (Data data : devices.get(path)) {
 				temp += "," + data.toString();
 			}
 			s += temp.substring(1);
 		}
 		s = s.substring(2);
-		Files.write(Paths.get(Configuration.getConfigurationDirectory().getAbsolutePath() + Configuration.LOG_FILE), s.getBytes());
-		
+		Files.write(
+				Paths.get(Configuration.getConfigurationDirectory().getAbsolutePath()
+						+ Configuration.LOG_FILE), s.getBytes());
+
 	}
-	
+
 	@Deprecated
 	public FileWriter(byte[] logFile, byte[] file, byte[] filePath) {
 		fileWriters.add(this);
@@ -101,7 +119,7 @@ public class FileWriter {
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Deprecated
 	private synchronized void writeLogFile(byte[] logFile) throws IOException {
 		File logs = new File(Configuration.getConfigurationDirectory() + Configuration.LOG_FILE);

@@ -281,8 +281,7 @@ public class ApplicationChannelActionListener implements
 				logs.add(temp);
 			Data data = new Data(Files.readAllBytes(Paths.get(Configuration.getSblitDirectory()
 					+ Configuration.slash + path)));
-			System.out.println("Zu sendende Daten: " + new String(data.getData()));
-			System.out.println("Aus dem Verzeichnis: " + Paths.get(Configuration.getSblitDirectory()
+			System.out.println("Verzeichnis: " + Paths.get(Configuration.getSblitDirectory()
 					+ Configuration.slash + path));
 			sendFile(
 					DirectoryWatcher.getSynchronizedDevices().get(path),
@@ -290,7 +289,7 @@ public class ApplicationChannelActionListener implements
 		}
 	}
 
-	@OnReceive(index = SblitMessage.FILE_MESSAGE)
+	@OnReceive(index = SblitMessage.FILE_MESSAGE)	
 	public void handleFileMessage(FileMessage fileMessage) {
 		System.out.println("received file");
 		LinkedList<Data> hashes = new LinkedList<>();

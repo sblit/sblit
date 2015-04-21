@@ -32,6 +32,8 @@ public class Configuration {
 
 	public static final String FOREIGN_FILES = "/foreign_files";
 	public static final String LOG_FILE = "/logs.txt";
+	
+	public static final String TEMP_FILE_START = ".sblit.";
 
 	private static HashMap<String, Boolean> authenticatedReceivers = new HashMap<String, Boolean>();
 	private static File configurationDirectory;
