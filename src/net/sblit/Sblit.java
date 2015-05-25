@@ -6,6 +6,7 @@ import java.util.LinkedList;
 
 import net.sblit.configuration.Configuration;
 import net.sblit.directoryWatcher.DirectoryWatcher;
+import net.sblit.gui.SystemTray;
 import net.sblit.message.SblitMessage;
 
 import org.dclayer.exception.net.buf.BufException;
@@ -29,23 +30,24 @@ public class Sblit {
 		Configuration.initialize();
 		System.out.println(new Configuration().toString());
 
-		// new Thread(new Runnable() {
-		//
-		// @Override
-		// public void run() {
-		// new SystemTray();
-		// }
-		// }).start();
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				new SystemTray();
+			}
+		}).start();
 
 		new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				SblitMessage message = new SblitMessage();
-					DirectoryWatcher directoryWatcher = new DirectoryWatcher(
-							Configuration.getSblitDirectory(), new File(Configuration
-									.getConfigurationDirectory().toString()
-									+ Configuration.LOG_FILE), new String(Configuration.getKey()));
+				DirectoryWatcher directoryWatcher = new DirectoryWatcher(
+						Configuration.getSblitDirectory(), new File(
+								Configuration.getConfigurationDirectory()
+										.toString() + Configuration.LOG_FILE),
+						new String(Configuration.getKey()));
 				while (true) {
 					try {
 						directoryWatcher.waitForChanges();
@@ -54,8 +56,11 @@ public class Sblit {
 					}
 					for (File f : directoryWatcher.getFilesToPush()) {
 						System.out.println(f.getAbsolutePath());
-						String path = f.getAbsolutePath()
-								.replace(Configuration.getSblitDirectory().getAbsolutePath(), "")
+						String path = f
+								.getAbsolutePath()
+								.replace(
+										Configuration.getSblitDirectory()
+												.getAbsolutePath(), "")
 								.substring(1);
 						LinkedList<Data> hashes;
 						try {
@@ -65,12 +70,14 @@ public class Sblit {
 							try {
 								message.fileRequest.hashes.setElements(hashes);
 							} catch (NullPointerException e) {
-								message.fileRequest.hashes.setElements(new LinkedList<Data>());
+								message.fileRequest.hashes
+										.setElements(new LinkedList<Data>());
 							}
 							for (Data channel : Configuration.getChannels()) {
 								try {
-									new StreamByteBuf(Configuration.getChannel(channel)
-											.getOutputStream()).write(message);
+									new StreamByteBuf(Configuration.getChannel(
+											channel).getOutputStream())
+											.write(message);
 								} catch (BufException e) {
 									e.printStackTrace();
 								}
@@ -80,15 +87,19 @@ public class Sblit {
 						}
 					}
 					for (File f : directoryWatcher.getFilesToDelete()) {
-						String path = f.getAbsolutePath()
-								.replace(Configuration.getSblitDirectory().getAbsolutePath(), "")
+						String path = f
+								.getAbsolutePath()
+								.replace(
+										Configuration.getSblitDirectory()
+												.getAbsolutePath(), "")
 								.substring(1);
 						message.set(SblitMessage.DELETE_MESSAGE);
 						message.deleteMessage.filePath.setString(path);
 						for (Data channel : Configuration.getChannels()) {
 							try {
-								new StreamByteBuf(Configuration.getChannel(channel)
-										.getOutputStream()).write(message);
+								new StreamByteBuf(Configuration.getChannel(
+										channel).getOutputStream())
+										.write(message);
 							} catch (BufException e) {
 								e.printStackTrace();
 							}
