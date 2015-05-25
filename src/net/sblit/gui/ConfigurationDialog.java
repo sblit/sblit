@@ -170,7 +170,7 @@ public class ConfigurationDialog{
 		try {
 			directoryPathLbl.setText(Configuration.getSblitDirectory().toString());
 		} catch (NullPointerException e){
-			directoryPathLbl.setText("No Directory set.");
+			directoryPathLbl.setText("D:\\Documents\\sblit");
 		}
 		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
 		directoryPathLbl.setLayoutData(layoutData);
@@ -191,7 +191,7 @@ public class ConfigurationDialog{
 	}
 
 	private void drawReceiverGroup(Group parent) {
-		Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
+		/*Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
 		receiverFileStateLbl.setText("");
 		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
 		receiverFileStateLbl.setLayoutData(layoutData);
@@ -213,11 +213,11 @@ public class ConfigurationDialog{
 		Button exportBtn = new Button(importExportCmpst, SWT.PUSH);
 		exportBtn.setText("Export");
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
-		exportBtn.setLayoutData(layoutData);
+		exportBtn.setLayoutData(layoutData);*/
 
 		final Table receiverTable = new Table(parent, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
 		fillReceiverTable(receiverTable, dummyReceiverHashMap());
-		layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
+		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
 		receiverTable.setLayoutData(layoutData);
 
 		Button editReceiverBtn = new Button(parent, SWT.PUSH);
@@ -302,15 +302,15 @@ public class ConfigurationDialog{
 	}
 
 	private void drawPartnerGroup(Group parent) {
-		Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
+		/*Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
 		receiverFileStateLbl.setText("");
 		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1);
 		layoutData.verticalSpan = 6;
-		receiverFileStateLbl.setLayoutData(layoutData);
+		receiverFileStateLbl.setLayoutData(layoutData);*/
 
 		Table receiverTable = new Table(parent, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
 		fillPartnerTable(receiverTable, true);
-		layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
+		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
 		receiverTable.setLayoutData(layoutData);
 
 		Button editBtn = new Button(parent, SWT.PUSH);
@@ -383,7 +383,6 @@ public class ConfigurationDialog{
 			}
 			table.getColumn(0).pack();
 		}
-
 	}
 
 	private String getRandomHexString(int numchars){
