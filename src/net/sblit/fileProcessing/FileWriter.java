@@ -66,9 +66,10 @@ public class FileWriter {
 					Paths.get(Configuration.getSblitDirectory().getAbsolutePath()
 							+ Configuration.slash + filePath), StandardCopyOption.ATOMIC_MOVE,
 					StandardCopyOption.REPLACE_EXISTING);
-
+			Configuration.getFileStateListener().unregisterFile(filePath);
 		} catch (IOException | BufException e) {
 			e.printStackTrace();
+			Configuration.getFileStateListener().error(filePath, e.getMessage());
 		}
 	}
 
