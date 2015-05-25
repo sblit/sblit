@@ -33,7 +33,7 @@ public class Configuration {
 
 	public static final String FOREIGN_FILES = "/foreign_files";
 	public static final String LOG_FILE = "/logs.txt";
-	
+
 	public static final String TEMP_FILE_START = ".sblit.";
 
 	private static HashMap<String, Boolean> authenticatedReceivers = new HashMap<String, Boolean>();
@@ -47,7 +47,7 @@ public class Configuration {
 	private static HashMap<Data, ApplicationChannel> channels = new HashMap<>();
 	private static HashMap<Data, ApplicationChannel> unauthorizedChannels = new HashMap<>();
 	private static FileStateListener fileStateListener;
-	
+
 	public static String slash;
 	public static String otherSlash;
 
@@ -63,7 +63,8 @@ public class Configuration {
 		String os = System.getProperty("os.name");
 		System.out.println(os);
 		if (os.contains("Windows")) {
-			configurationDirectory = new File(System.getenv("APPDATA") + "/SBLIT/");
+			configurationDirectory = new File(System.getenv("APPDATA")
+					+ "/SBLIT/");
 			slash = "\\";
 			otherSlash = "/";
 		} else {
@@ -76,20 +77,25 @@ public class Configuration {
 				configurationDirectory, os);
 		try {
 			Service service = new Service(DEFAULT_DCL_PORT);
-			app = new ApplicationInstanceBuilder(service).joinDefaultNetworks(new Receiver())
-					.addressKeyPair(addressConfiguration.getKeyPair()).connect();
+			app = new ApplicationInstanceBuilder(service)
+					.joinDefaultNetworks(new Receiver())
+					.addressKeyPair(addressConfiguration.getKeyPair())
+					.connect();
 
 		} catch (Exception e) {
 			JOptionPane
 					.showMessageDialog(
 							null,
 							"DCL Service must be installed and running on your device!\nPlease start Sblit again after you made sure that DCL is running!\nDetailed Error: "
-									+ e.getMessage(), "DCL not running", JOptionPane.ERROR_MESSAGE);
+									+ e.getMessage(), "DCL not running",
+							JOptionPane.ERROR_MESSAGE);
 			e.printStackTrace();
 			System.exit(0);
 		}
-		receiverConfiguration = new ReceiverConfiguration(configurationDirectory.getAbsolutePath());
-		keyConfiguration = new KeyConfiguration(configurationDirectory.getAbsolutePath(), os);
+		receiverConfiguration = new ReceiverConfiguration(
+				configurationDirectory.getAbsolutePath());
+		keyConfiguration = new KeyConfiguration(
+				configurationDirectory.getAbsolutePath(), os);
 		System.out.println(configurationDirectory.getAbsolutePath());
 
 		privateAddressKey = addressConfiguration.getPrivateKey();
@@ -97,7 +103,26 @@ public class Configuration {
 		dataDirectoryConfiguration = new DataDirectoryConfiguration(
 				configurationDirectory.getAbsolutePath());
 
-		keyConfiguration = new KeyConfiguration(configurationDirectory.getAbsolutePath(), os);
+		keyConfiguration = new KeyConfiguration(
+				configurationDirectory.getAbsolutePath(), os);
+		if (fileStateListener == null)
+			fileStateListener = new FileStateListener() {
+
+				@Override
+				public void unregisterFile(String path) {
+					// nothing to do
+				}
+
+				@Override
+				public void registerFile(String path) {
+					// nothing to do
+				}
+
+				@Override
+				public void error(String path, String message) {
+					// nothing to do
+				}
+			};
 	}
 
 	/**
@@ -157,8 +182,8 @@ public class Configuration {
 	public static HashMap<String, String> getReceiversAndNames() {
 		return receiverConfiguration.getReceivers();
 	}
-	
-	public static HashMap<String, String> getForeignReceiversAndNames(){
+
+	public static HashMap<String, String> getForeignReceiversAndNames() {
 		return receiverConfiguration.getForeignReceivers();
 	}
 
@@ -174,28 +199,30 @@ public class Configuration {
 	public static void addReceiver(String name, String address) {
 		receiverConfiguration.addReceiver(name, address);
 	}
-	
-	public static void removeReceiver(String address){
+
+	public static void removeReceiver(String address) {
 		receiverConfiguration.removeReceiver(address);
 	}
 
 	/**
 	 * Adds a partner.
+	 * 
 	 * @param name
-	 * Custom name of the partner (can be null)
+	 *            Custom name of the partner (can be null)
 	 * @param address
-	 * Address of the partner (can't be null)
+	 *            Address of the partner (can't be null)
 	 * @param active
-	 * True if partner saves own files.<br />False if partner just receives its files.
+	 *            True if partner saves own files.<br />
+	 *            False if partner just receives its files.
 	 */
-	public static void addPartner(String name, String address, boolean active){
+	public static void addPartner(String name, String address, boolean active) {
 		receiverConfiguration.addForeignReceiver(name, address, active);
 	}
-	
-	public static void removePartner(String address){
+
+	public static void removePartner(String address) {
 		receiverConfiguration.removeForeignReceiver(address);
 	}
-	
+
 	public static void setSblitDirectory(String directory) {
 		dataDirectoryConfiguration.setDataDirectory(directory);
 	}
@@ -204,8 +231,9 @@ public class Configuration {
 		keyConfiguration.setKey(key);
 	}
 
-	/** 
+	/**
 	 * Use allowChannel(Data receiverData) instead
+	 * 
 	 * @param receiver
 	 */
 	@Deprecated
@@ -230,15 +258,16 @@ public class Configuration {
 	 * @return
 	 */
 	public static Data[] getReceivers() {
-		Collection<String> receivers = receiverConfiguration.getReceivers().keySet();
-		
+		Collection<String> receivers = receiverConfiguration.getReceivers()
+				.keySet();
+
 		Data[] result = new Data[receivers.size()];
 		int i = 0;
 		for (String receiver : receivers) {
 			try {
 				RSAPublicKey publicKey = new RSAPublicKey(new BigInteger(
-					receiver.split(";")[1]), new BigInteger(
-					receiver.split(";")[0]));
+						receiver.split(";")[1]), new BigInteger(
+						receiver.split(";")[0]));
 				result[i] = publicKey.toData();
 			} catch (InsufficientKeySizeException e) {
 				e.printStackTrace();
@@ -247,12 +276,13 @@ public class Configuration {
 		}
 		return result;
 	}
-	
+
 	public static Data[] getPartners() {
-		Collection<String> receivers = receiverConfiguration.getForeignReceivers().keySet();
+		Collection<String> receivers = receiverConfiguration
+				.getForeignReceivers().keySet();
 		Data[] result = new Data[receivers.size()];
 		int i = 0;
-		for(String receiver: receivers){
+		for (String receiver : receivers) {
 			result[i] = new Data(receiver.getBytes());
 			i++;
 		}
@@ -271,7 +301,8 @@ public class Configuration {
 		return channels.get(receiverData);
 	}
 
-	public static void addUnauthorizedChannel(Data receiverData, ApplicationChannel channel) {
+	public static void addUnauthorizedChannel(Data receiverData,
+			ApplicationChannel channel) {
 		unauthorizedChannels.put(receiverData, channel);
 	}
 
@@ -288,7 +319,8 @@ public class Configuration {
 
 	@Override
 	public String toString() {
-		String configurationDirectory = Configuration.configurationDirectory.getAbsolutePath();
+		String configurationDirectory = Configuration.configurationDirectory
+				.getAbsolutePath();
 		String privateAddressKey = getPrivateAddressKey().toString();
 		String receiversAndNames = getReceiversAndNames().toString();
 		String publicAddressKey = Configuration.publicAddressKey.toString();
@@ -298,27 +330,28 @@ public class Configuration {
 
 		return String
 				.format("Configurationdirectory: %s\nsblit-directory: %s\nAddress: %s\nPrivate address-key: %s\nPassword: %s\nReceivers: %s\nAuthenticated receivers: %s",
-						configurationDirectory, sblitDirectory, publicAddressKey,
-						privateAddressKey, password, receiversAndNames, channels);
+						configurationDirectory, sblitDirectory,
+						publicAddressKey, privateAddressKey, password,
+						receiversAndNames, channels);
 	}
-	
-	
+
 	/**
 	 * Checks, if the receiver is active or passive.
+	 * 
 	 * @param receiver
-	 * The reveiver to be checked.
-	 * @returns
-	 * True if the receiver is active. <br />False if the receiver if passive.
+	 *            The reveiver to be checked.
+	 * @returns True if the receiver is active. <br />
+	 *          False if the receiver if passive.
 	 */
-	public boolean checkActivePartner(String receiver){
+	public boolean checkActivePartner(String receiver) {
 		return receiverConfiguration.checkActiveReceiver(receiver);
 	}
-	
-	public static void setFileStateListener(FileStateListener fileStateListener){
+
+	public static void setFileStateListener(FileStateListener fileStateListener) {
 		Configuration.fileStateListener = fileStateListener;
 	}
-	
-	public static FileStateListener getFileStateListener(){
+
+	public static FileStateListener getFileStateListener() {
 		return fileStateListener;
 	}
 }
