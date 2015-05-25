@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.swing.JOptionPane;
 
+import net.sblit.fileProcessing.FileStateListener;
 import net.sblit.filesync.Receiver;
 
 import org.dclayer.application.ApplicationInstance;
@@ -45,6 +46,7 @@ public class Configuration {
 	private static KeyConfiguration keyConfiguration;
 	private static HashMap<Data, ApplicationChannel> channels = new HashMap<>();
 	private static HashMap<Data, ApplicationChannel> unauthorizedChannels = new HashMap<>();
+	private static FileStateListener fileStateListener;
 	
 	public static String slash;
 	public static String otherSlash;
@@ -310,5 +312,13 @@ public class Configuration {
 	 */
 	public boolean checkActivePartner(String receiver){
 		return receiverConfiguration.checkActiveReceiver(receiver);
+	}
+	
+	public static void setFileStateListener(FileStateListener fileStateListener){
+		Configuration.fileStateListener = fileStateListener;
+	}
+	
+	public static FileStateListener getFileStateListener(){
+		return fileStateListener;
 	}
 }
