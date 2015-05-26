@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import org.dclayer.crypto.key.RSAPublicKey;
+import net.sblit.crypto.RSAPublicKey;
 
 public class ReceiverConfiguration {
 
@@ -58,7 +58,7 @@ public class ReceiverConfiguration {
 						.split(",");
 				for (String receiver : receivers) {
 					String[] temp = receiver.split("=");
-					this.foreignReceivers.put(new RSAPublicKey(new BigInteger(temp[0].split(";")[0]), new BigInteger(temp[0].split(";")[1])), temp[1]);
+					this.foreignReceivers.put(new RSAPublicKey(new BigInteger(temp[0].split(";")[1]), new BigInteger(temp[0].split(";")[0])), temp[1]);
 				}
 			} catch (Exception e) {
 				System.out
