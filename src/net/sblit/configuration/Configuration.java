@@ -15,7 +15,10 @@ import org.dclayer.application.ApplicationInstanceBuilder;
 import org.dclayer.application.Service;
 import org.dclayer.application.applicationchannel.ApplicationChannel;
 import org.dclayer.crypto.key.RSAPrivateKey;
+import org.dclayer.exception.crypto.InsufficientKeySizeException;
+
 import net.sblit.crypto.RSAPublicKey;
+
 import org.dclayer.net.Data;
 
 /**
@@ -97,7 +100,11 @@ public class Configuration {
 		System.out.println(configurationDirectory.getAbsolutePath());
 
 		privateAddressKey = addressConfiguration.getPrivateKey();
-		publicAddressKey = (RSAPublicKey) addressConfiguration.getPublicKey();
+		try {
+			publicAddressKey = new RSAPublicKey(addressConfiguration.getPublicKey().getRSAKeyParameters());
+		} catch (InsufficientKeySizeException e) {
+			e.printStackTrace();
+		}
 		dataDirectoryConfiguration = new DataDirectoryConfiguration(
 				configurationDirectory.getAbsolutePath());
 
