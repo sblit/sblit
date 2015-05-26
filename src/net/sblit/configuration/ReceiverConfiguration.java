@@ -1,27 +1,26 @@
 package net.sblit.configuration;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.math.BigInteger;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import org.dclayer.crypto.key.RSAPublicKey;
+
 public class ReceiverConfiguration {
 
 	protected static final String RECEIVER_PATH = "/receivers.txt";
 	protected static final String FOREIGN_RECEIVER_PATH = "/freceivers.txt";
-	private HashMap<String, String> receivers = new HashMap<String, String>();
+	private HashMap<RSAPublicKey, String> receivers = new HashMap<RSAPublicKey, String>();
 	private File receiverFile;
 	private File foreignReceiverFile;
-	private HashMap<String, String> foreignReceivers = new HashMap<String, String>();
-	private HashSet<String> activeReceivers = new HashSet<String>();
+	private HashMap<RSAPublicKey, String> foreignReceivers = new HashMap<RSAPublicKey, String>();
+	private HashSet<RSAPublicKey> activeReceivers = new HashSet<RSAPublicKey>();
 
 	public ReceiverConfiguration(String configurationDirectory) {
 		receiverFile = new File(configurationDirectory
@@ -35,7 +34,7 @@ public class ReceiverConfiguration {
 						.split(",");
 				for (String receiver : receivers) {
 					String[] temp = receiver.split("=");
-					this.receivers.put(temp[0], temp[1]);
+					this.receivers.put(new RSAPublicKey(new BigInteger(temp[0].split(";")[1]), new BigInteger(temp[0].split(";")[0])), temp[1]);
 				}
 			} catch (Exception e) {
 				System.out
@@ -59,7 +58,7 @@ public class ReceiverConfiguration {
 						.split(",");
 				for (String receiver : receivers) {
 					String[] temp = receiver.split("=");
-					this.foreignReceivers.put(temp[0], temp[1]);
+					this.foreignReceivers.put(new RSAPublicKey(new BigInteger(temp[0].split(";")[0]), new BigInteger(temp[0].split(";")[1])), temp[1]);
 				}
 			} catch (Exception e) {
 				System.out
@@ -74,22 +73,22 @@ public class ReceiverConfiguration {
 		}
 	}
 
-	public HashMap<String, String> getReceivers() {
+	public HashMap<RSAPublicKey, String> getReceivers() {
 		return receivers;
 	}
 
-	public HashMap<String, String> getForeignReceivers() {
+	public HashMap<RSAPublicKey, String> getForeignReceivers() {
 		return foreignReceivers;
 	}
 
-	void addReceiver(String name, String receiver) {
+	void addReceiver(String name, RSAPublicKey receiver) {
 		receivers.put(receiver, name);
 
 		updateFile(receiverFile, receivers);
 	}
 
 	private synchronized void updateFile(File file,
-			Map<String, String> receivers) {
+			Map<RSAPublicKey, String> receivers) {
 		try {
 			String temp = receivers.toString();
 			temp = temp.substring(1, temp.length() - 1);
@@ -110,7 +109,7 @@ public class ReceiverConfiguration {
 		updateFile(foreignReceiverFile, foreignReceivers);
 	}
 
-	void addForeignReceiver(String name, String receiver,
+	void addForeignReceiver(String name, RSAPublicKey receiver,
 			boolean active) {
 		foreignReceivers.put(receiver, name);
 		//TODO nicht nur temporär

@@ -1,7 +1,6 @@
 package net.sblit.configuration;
 
 import java.io.File;
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
@@ -17,7 +16,6 @@ import org.dclayer.application.Service;
 import org.dclayer.application.applicationchannel.ApplicationChannel;
 import org.dclayer.crypto.key.RSAPrivateKey;
 import org.dclayer.crypto.key.RSAPublicKey;
-import org.dclayer.exception.crypto.InsufficientKeySizeException;
 import org.dclayer.net.Data;
 
 /**
@@ -179,11 +177,11 @@ public class Configuration {
 	 * 
 	 * @return Returns OWN devices! (name->address)
 	 */
-	public static HashMap<String, String> getReceiversAndNames() {
+	public static HashMap<RSAPublicKey, String> getReceiversAndNames() {
 		return receiverConfiguration.getReceivers();
 	}
 
-	public static HashMap<String, String> getForeignReceiversAndNames() {
+	public static HashMap<RSAPublicKey, String> getForeignReceiversAndNames() {
 		return receiverConfiguration.getForeignReceivers();
 	}
 
@@ -196,7 +194,7 @@ public class Configuration {
 		return keyConfiguration.getKey();
 	}
 
-	public static void addReceiver(String name, String address) {
+	public static void addReceiver(String name, RSAPublicKey address) {
 		receiverConfiguration.addReceiver(name, address);
 	}
 
@@ -215,7 +213,7 @@ public class Configuration {
 	 *            True if partner saves own files.<br />
 	 *            False if partner just receives its files.
 	 */
-	public static void addPartner(String name, String address, boolean active) {
+	public static void addPartner(String name, RSAPublicKey address, boolean active) {
 		receiverConfiguration.addForeignReceiver(name, address, active);
 	}
 
@@ -258,32 +256,25 @@ public class Configuration {
 	 * @return
 	 */
 	public static Data[] getReceivers() {
-		Collection<String> receivers = receiverConfiguration.getReceivers()
+		Collection<RSAPublicKey> receivers = receiverConfiguration.getReceivers()
 				.keySet();
 
 		Data[] result = new Data[receivers.size()];
 		int i = 0;
-		for (String receiver : receivers) {
-			try {
-				RSAPublicKey publicKey = new RSAPublicKey(new BigInteger(
-						receiver.split(";")[1]), new BigInteger(
-						receiver.split(";")[0]));
-				result[i] = publicKey.toData();
-			} catch (InsufficientKeySizeException e) {
-				e.printStackTrace();
-			}
+		for (RSAPublicKey receiver : receivers) {
+			result[i] = receiver.toData();
 			i++;
 		}
 		return result;
 	}
 
 	public static Data[] getPartners() {
-		Collection<String> receivers = receiverConfiguration
+		Collection<RSAPublicKey> receivers = receiverConfiguration
 				.getForeignReceivers().keySet();
 		Data[] result = new Data[receivers.size()];
 		int i = 0;
-		for (String receiver : receivers) {
-			result[i] = new Data(receiver.getBytes());
+		for (RSAPublicKey receiver : receivers) {
+			result[i] = receiver.toData();
 			i++;
 		}
 		return result;

@@ -7,6 +7,7 @@ import net.sblit.converter.Converter;
 import org.dclayer.application.NetworkEndpointActionListener;
 import org.dclayer.application.networktypeslotmap.NetworkEndpointSlot;
 import org.dclayer.crypto.key.Key;
+import org.dclayer.crypto.key.RSAPublicKey;
 import org.dclayer.net.Data;
 
 /**
@@ -49,9 +50,11 @@ public class Receiver implements NetworkEndpointActionListener {
 			NetworkEndpointSlot networkEndpointSlot, Key remotePublicKey, String actionIdentifier,
 			org.dclayer.net.lla.LLA remoteLLA) {
 		System.out.println("reqested");
-		if (Configuration.getReceiversAndNames().containsKey(remotePublicKey.toData())) {
+		if (Configuration.getReceiversAndNames().containsKey((RSAPublicKey)remotePublicKey)) {
+			System.out.println("ich will mich verbinden");
 			return new ApplicationChannelActionListener();
 		} else {
+			System.out.println("ich will mich nicht verbinden");
 			return null;
 		}
 	}
