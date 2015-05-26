@@ -21,9 +21,16 @@ import org.dclayer.net.buf.StreamByteBuf;
 public class Sblit {
 
 	public static final String APPLICATION_IDENTIFIER = "org.sblit";
+	public static boolean terminate = false;
 
 	public static void main(String[] args) {
 		new Sblit();
+	}
+	
+	public static void exit(){
+		terminate = true;
+		if(Configuration.getChannels().size() <= 0)
+			System.exit(0);
 	}
 
 	public Sblit() {
