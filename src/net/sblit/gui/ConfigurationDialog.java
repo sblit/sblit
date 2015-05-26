@@ -8,6 +8,8 @@ import java.util.Random;
 
 import net.sblit.configuration.Configuration;
 
+import org.dclayer.crypto.key.RSAPublicKey;
+import org.dclayer.net.component.KeyComponent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -35,27 +37,23 @@ import org.eclipse.swt.widgets.TableItem;
  *
  */
 public class ConfigurationDialog{
-	//TODO static?
 	Shell configShell;
-	String[] receivers;
-	File dataDirectory;
-	boolean ReceiverConfigSaved  = true; //TODO implement that shit
-	boolean PartnerConfigSaved   = true; //TODO implement that shit
-	boolean DirectoryConfigSaved = true; //TODO implement that shit
+	HashMap<KeyComponent, String> receiverChanges = new HashMap<>();
+	HashMap<KeyComponent, String> partnerChanges = new HashMap<>();	
 
 	public ConfigurationDialog(){
-		this.configShell = new Shell (Display.getCurrent());
+		this.configShell = new Shell (Display.getCurrent(), SWT.CLOSE | SWT.RESIZE | SWT.APPLICATION_MODAL);
 		create();
 	}
 
-	public void create(){
+	private void create(){
 		configShell.setText("Configuration");
 
 		// Adds a prompt for closing configuration-gui without saving
 		configShell.addListener (SWT.Close, new Listener () {
 			@Override
 			public void handleEvent (Event event) {
-				if (ReceiverConfigSaved == false || PartnerConfigSaved == false || DirectoryConfigSaved == false){
+				if (receiverChanges.size() != 0 || partnerChanges.size() != 0){
 					int style = SWT.APPLICATION_MODAL | SWT.YES | SWT.NO;
 					MessageBox messageBox = new MessageBox (configShell, style);
 					messageBox.setText ("Alert");
@@ -116,6 +114,10 @@ public class ConfigurationDialog{
 		configShell.close();
 	}
 
+	/**
+	 * Draws the {Group} including the save button and the cancel button
+	 * @param parent
+	 */
 	private void drawquitBtns(Composite parent) {
 		Button cancelBtn = new Button(parent, SWT.PUSH);
 		cancelBtn.setText("Cancel");
@@ -123,7 +125,7 @@ public class ConfigurationDialog{
 		{
 			@Override public void widgetSelected(final SelectionEvent e)
 			{
-				if (ReceiverConfigSaved == false || PartnerConfigSaved == false || DirectoryConfigSaved == false){
+				if (receiverChanges.size() != 0 || partnerChanges.size() != 0){
 					int style = SWT.APPLICATION_MODAL | SWT.YES | SWT.NO;
 					MessageBox messageBox = new MessageBox (configShell, style);
 					messageBox.setText ("Alert");
@@ -145,15 +147,7 @@ public class ConfigurationDialog{
 		{
 			@Override public void widgetSelected(final SelectionEvent e)
 			{
-				if (ReceiverConfigSaved == false){
-					
-				}
-				if (PartnerConfigSaved == false){
-					
-				}
-				if (DirectoryConfigSaved == false){
-					
-				}
+				// TODO add/removeReceiver
 				close();
 			}
 		});
@@ -165,6 +159,10 @@ public class ConfigurationDialog{
 		
 	}
 
+	/**
+	 * Draws the Group where the sblit directory can be chosen
+	 * @param parent
+	 */
 	private void drawDirectoryGroup(Group parent) {
 		final Label directoryPathLbl = new Label(parent, 0);
 		try {
@@ -190,6 +188,11 @@ public class ConfigurationDialog{
 		selectBtn.setLayoutData(layoutData);
 	}
 
+
+	/**
+	 * Draws the {Group} including the table of the receivers
+	 * @param parent
+	 */
 	private void drawReceiverGroup(Group parent) {
 		/*Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
 		receiverFileStateLbl.setText("");
@@ -216,7 +219,7 @@ public class ConfigurationDialog{
 		exportBtn.setLayoutData(layoutData);*/
 
 		final Table receiverTable = new Table(parent, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
-		fillReceiverTable(receiverTable, dummyReceiverHashMap());
+		fillReceiverTable(receiverTable);
 		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
 		receiverTable.setLayoutData(layoutData);
 
@@ -253,20 +256,16 @@ public class ConfigurationDialog{
 	private void editReceiver(Table receiverTable){
 		String[] input = new String[2];
 		try{
+		// TODO StringInput --> receiversChange.put(...);
 		TableItem selection = receiverTable.getSelection()[0];
-		String oldHost = selection.getText(0).toString();
-		String oldKey  = selection.getText(1).toString();					
+		String oldHost = selection.getText(0);
 		StringInputDialog receiverDialog = new StringInputDialog();
-		receiverDialog.setMessage("Edit the receiver.  Format: hostname;publicKey");
-		receiverDialog.setInput(oldHost + ";" + oldKey);
-		input = receiverDialog.open();
-		String newHost = input[0];
-		String newKey = input[1];
-		if(oldHost!=newHost && oldKey!=newKey){
-			ReceiverConfigSaved = false;
-			selection.setText(0, newHost);
+		receiverDialog.setMessage("Put in a new hostname:");
+		receiverDialog.setInput(oldHost);
+		receiverDialog.open();
+		if(receiverDialog.getInput() != "" && oldHost!=receiverDialog.getInput()){
+			selection.setText(0, receiverDialog.getInput());
 			
-			selection.setText(1, newKey);
 		}
 		} catch(ArrayIndexOutOfBoundsException ex){
 			// No Row Selected
@@ -274,6 +273,7 @@ public class ConfigurationDialog{
 	}
 	
 	private void addReceiver(Table receiverTable){
+		// TODO importReceiver --> receiversChange.put(...);
 		String[] input = new String[2];
 		try{
 		TableItem selection = receiverTable.getSelection()[0];
@@ -296,11 +296,10 @@ public class ConfigurationDialog{
 		}
 	}
 
-	private boolean checkInput(String[] input){
-		//TODO Implement the checking method
-		return true;
-	}
-
+	/**
+	 * Draws the {Group} including the table of partners
+	 * @param parent
+	 */
 	private void drawPartnerGroup(Group parent) {
 		/*Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
 		receiverFileStateLbl.setText("");
@@ -308,7 +307,7 @@ public class ConfigurationDialog{
 		layoutData.verticalSpan = 6;
 		receiverFileStateLbl.setLayoutData(layoutData);*/
 
-		Table receiverTable = new Table(parent, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
+		Table receiverTable = new Table(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION);
 		fillPartnerTable(receiverTable, true);
 		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
 		receiverTable.setLayoutData(layoutData);
@@ -329,7 +328,7 @@ public class ConfigurationDialog{
 		removeReceiverBtn.setLayoutData(layoutData);
 	}
 
-	private void fillReceiverTable(Table table, HashMap<String, String> receivers) {
+	private void fillReceiverTable(Table table) {
 		table.setLinesVisible (true);
 		table.setHeaderVisible (true);
 
@@ -341,11 +340,13 @@ public class ConfigurationDialog{
 
 		TableItem item = null;;
 
-		for (Map.Entry<String, String> entry : receivers.entrySet())
+		for (Map.Entry<RSAPublicKey, String> entry : Configuration.getReceiversAndNames().entrySet())
 		{
 			item = new TableItem(table, SWT.NONE);
-			item.setText(0, "" + entry.getKey());
-			item.setText(1, "" + entry.getValue());
+//			item.setText(0, entry.getValue());		// Value = Hostname
+//			item.setText(1, new KeyComponent().setRSAKeyComponent().setKey(entry.getKey()));		// Key   = RSA PublicKey
+			item.setData(entry.getValue(), entry.getKey());
+			System.out.println(item.getData());
 		}
 
 		table.getColumn(0).pack();
