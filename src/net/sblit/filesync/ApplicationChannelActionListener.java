@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import net.sblit.Sblit;
 import net.sblit.configuration.Configuration;
 import net.sblit.crypto.SymmetricEncryption;
 import net.sblit.directoryWatcher.DirectoryWatcher;
@@ -37,6 +38,8 @@ public class ApplicationChannelActionListener
 
 	protected ApplicationChannel applicationChannel;
 	protected SblitMessage message = new SblitMessage(this);
+
+	private int transfers = 0;
 
 	private Fixed128ByteCryptoChallenge challenge;
 	protected SymmetricEncryption symmetricEncryption = new SymmetricEncryption(
@@ -141,15 +144,18 @@ public class ApplicationChannelActionListener
 
 	public synchronized void sendFileRequest(String path,
 			LinkedList<Data> hashes) {
-		message.set(SblitMessage.FILE_REQUEST);
+		if (!Sblit.terminate) {
+			transfers++;
+			message.set(SblitMessage.FILE_REQUEST);
 
-		message.fileRequest.path.setString(path);
-		message.fileRequest.hashes.setElements(hashes);
+			message.fileRequest.path.setString(path);
+			message.fileRequest.hashes.setElements(hashes);
 
-		try {
-			streamByteBuf.write(message);
-		} catch (BufException e) {
-			e.printStackTrace();
+			try {
+				streamByteBuf.write(message);
+			} catch (BufException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -188,6 +194,7 @@ public class ApplicationChannelActionListener
 
 	private synchronized void sendFileResponse(String path, Data need,
 			Data newHash) throws BufException {
+		transfers++;
 		message.set(SblitMessage.FILE_RESPONSE);
 		System.out.println("Path:" + path);
 		message.fileResponse.path.setString(path);
@@ -314,6 +321,13 @@ public class ApplicationChannelActionListener
 			sendFile(DirectoryWatcher.getSynchronizedDevices().get(path), data,
 					path, logs);
 		}
+		transfers--;
+		if (transfers <= 0 && Sblit.terminate) {
+			Configuration.removeChannel(applicationChannel.getRemotePublicKey()
+					.toData());
+			if (Configuration.getChannels().size() <= 0)
+				System.exit(0);
+		}
 	}
 
 	@OnReceive(index = SblitMessage.FILE_MESSAGE)
@@ -335,8 +349,17 @@ public class ApplicationChannelActionListener
 					synchronizedDevices);
 		} catch (Exception e) {
 			e.printStackTrace();
-			Configuration.getFileStateListener().error(fileMessage.filePath.getString().replace(
-							Configuration.otherSlash, Configuration.slash), e.getMessage());
+			Configuration.getFileStateListener().error(
+					fileMessage.filePath.getString().replace(
+							Configuration.otherSlash, Configuration.slash),
+					e.getMessage());
+		}
+		transfers--;
+		if (transfers <= 0 && Sblit.terminate) {
+			Configuration.removeChannel(applicationChannel.getRemotePublicKey()
+					.toData());
+			if (Configuration.getChannels().size() <= 0)
+				System.exit(0);
 		}
 	}
 
