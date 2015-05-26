@@ -6,7 +6,6 @@ import java.util.LinkedList;
 
 import net.sblit.configuration.Configuration;
 import net.sblit.directoryWatcher.DirectoryWatcher;
-import net.sblit.gui.SystemTray;
 import net.sblit.message.SblitMessage;
 
 import org.dclayer.exception.net.buf.BufException;
@@ -27,7 +26,7 @@ public class Sblit {
 		new Sblit();
 	}
 	
-	public static void exit(){
+	public synchronized static void exit(){
 		terminate = true;
 		if(Configuration.getChannels().size() <= 0)
 			System.exit(0);
@@ -37,13 +36,13 @@ public class Sblit {
 		Configuration.initialize();
 		System.out.println(new Configuration().toString());
 
-		new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				new SystemTray();
-			}
-		}).start();
+//		new Thread(new Runnable() {
+//
+//			@Override
+//			public void run() {
+//				new SystemTray();
+//			}
+//		}).start();
 
 		new Thread(new Runnable() {
 
