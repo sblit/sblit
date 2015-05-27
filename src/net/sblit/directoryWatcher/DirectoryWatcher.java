@@ -62,7 +62,8 @@ public class DirectoryWatcher {
 	 *            synchronized between all your devices and can be deleted from
 	 *            the partner devices
 	 */
-	public DirectoryWatcher(File directory, File logFile, String deviceIdentifier) {
+	public DirectoryWatcher(File directory, File logFile,
+			String deviceIdentifier) {
 		this.logFile = logFile;
 		Path filesDirectory = Paths.get(directory.getAbsolutePath());
 		System.out.println("FilesDirectory: \"" + filesDirectory + "\"");
@@ -71,8 +72,10 @@ public class DirectoryWatcher {
 
 		try {
 			watcher = filesDirectory.getFileSystem().newWatchService();
-			filesDirectory.register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
-					StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+			filesDirectory.register(watcher,
+					StandardWatchEventKinds.ENTRY_CREATE,
+					StandardWatchEventKinds.ENTRY_DELETE,
+					StandardWatchEventKinds.ENTRY_MODIFY);
 
 			registerAll(directory.toPath());
 		} catch (IOException e) {
@@ -84,10 +87,12 @@ public class DirectoryWatcher {
 	private void registerAll(final Path start) throws IOException {
 		Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
 			@Override
-			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-					throws IOException {
-				WatchKey key = dir.register(watcher, StandardWatchEventKinds.ENTRY_CREATE,
-						StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+			public FileVisitResult preVisitDirectory(Path dir,
+					BasicFileAttributes attrs) throws IOException {
+				WatchKey key = dir.register(watcher,
+						StandardWatchEventKinds.ENTRY_CREATE,
+						StandardWatchEventKinds.ENTRY_DELETE,
+						StandardWatchEventKinds.ENTRY_MODIFY);
 
 				watchKeys.put(key, dir);
 				return FileVisitResult.CONTINUE;
@@ -110,10 +115,15 @@ public class DirectoryWatcher {
 
 		for (@SuppressWarnings("rawtypes")
 		WatchEvent event : events) {
-			File file = new File(dir + Configuration.slash + event.context().toString());
-			String relativePath = file.getAbsolutePath()
-					.replace(Configuration.getSblitDirectory().getAbsolutePath(), "").substring(1);
-			if (relativePath.lastIndexOf(Configuration.slash) >= relativePath.lastIndexOf(".sblit.")) {
+			File file = new File(dir + Configuration.slash
+					+ event.context().toString());
+			String relativePath = file
+					.getAbsolutePath()
+					.replace(
+							Configuration.getSblitDirectory().getAbsolutePath(),
+							"").substring(1);
+			if (relativePath.lastIndexOf(Configuration.slash) >= relativePath
+					.lastIndexOf(".sblit.")) {
 				if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
 					LinkedList<Data> hashes = new LinkedList<>();
 					if (!file.isDirectory()) {
@@ -123,8 +133,10 @@ public class DirectoryWatcher {
 						hashes.add(hash);
 						files.put(relativePath, hashes);
 						LinkedList<Data> synchronizedDevice = new LinkedList<>();
-						synchronizedDevice.add(Configuration.getPublicAddressKey().toData());
-						synchronizedDevices.put(relativePath, synchronizedDevice);
+						synchronizedDevice.add(Configuration
+								.getPublicAddressKey().toData());
+						synchronizedDevices.put(relativePath,
+								synchronizedDevice);
 					} else {
 						registerAll(Configuration.getSblitDirectory().toPath());
 					}
@@ -141,11 +153,22 @@ public class DirectoryWatcher {
 						hashes = new LinkedList<>();
 					boolean needToSend = true;
 					if (!file.isDirectory()) {
-						byte[] fileContent = Files.readAllBytes(file.toPath());
-						// �berpr�ft, was mit dem File passiert ist
-						Data hash = Crypto.sha1(new Data(fileContent));
-						needToSend = !hashes.contains(hash);
-						hashes.add(hash);
+						try {
+							byte[] fileContent = Files.readAllBytes(file
+									.toPath());
+							// �berpr�ft, was mit dem File passiert ist
+							Data hash = Crypto.sha1(new Data(fileContent));
+							needToSend = !hashes.contains(hash);
+							hashes.add(hash);
+						} catch (NoSuchFileException e) {
+							files.remove(relativePath);
+							if (file.isDirectory()) {
+								registerAll(Configuration.getSblitDirectory()
+										.toPath());
+							}
+							filesToDelete = refreshFilesArray(filesToDelete,
+									file);
+						}
 					} else {
 						registerAll(Configuration.getSblitDirectory().toPath());
 					}
@@ -160,8 +183,10 @@ public class DirectoryWatcher {
 					} else {
 						filesToPush = refreshFilesArray(filesToPush, file);
 						LinkedList<Data> synchronizedDevice = new LinkedList<>();
-						synchronizedDevice.add(Configuration.getPublicAddressKey().toData());
-						synchronizedDevices.put(relativePath, synchronizedDevice);
+						synchronizedDevice.add(Configuration
+								.getPublicAddressKey().toData());
+						synchronizedDevices.put(relativePath,
+								synchronizedDevice);
 					}
 					;
 				}
@@ -184,7 +209,8 @@ public class DirectoryWatcher {
 	// }
 
 	private synchronized void write(Map<String, LinkedList<Data>> files,
-			Map<String, LinkedList<Data>> synchronizedDevices) throws IOException {
+			Map<String, LinkedList<Data>> synchronizedDevices)
+			throws IOException {
 		String s = "";
 		try {
 			if (files.size() > 0) {
@@ -264,17 +290,18 @@ public class DirectoryWatcher {
 	 * @return
 	 * @throws IOException
 	 */
-	public synchronized static HashMap<String, String> getLogFileContent(File logFile)
-			throws IOException {
+	public synchronized static HashMap<String, String> getLogFileContent(
+			File logFile) throws IOException {
 		Map<String, String> files = new HashMap<String, String>();
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(
-					logFile)));
+			BufferedReader br = new BufferedReader(new InputStreamReader(
+					new FileInputStream(logFile)));
 			String filesString = br.readLine();
 			if (filesString != null) {
 				String[] filesArray = filesString.split("\n");
 				for (int i = 0; i < filesArray.length; i++) {
-					files.put(filesArray[i].split("=")[0], filesArray[i].split("=")[1]);
+					files.put(filesArray[i].split("=")[0],
+							filesArray[i].split("=")[1]);
 				}
 			}
 			br.close();
@@ -284,14 +311,16 @@ public class DirectoryWatcher {
 		return (HashMap<String, String>) files;
 	}
 
-	public synchronized static HashMap<String, LinkedList<Data>> getLogs() throws IOException {
+	public synchronized static HashMap<String, LinkedList<Data>> getLogs()
+			throws IOException {
 
 		HashMap<String, LinkedList<Data>> result = new HashMap<>();
-		File logFile = new File(Configuration.getConfigurationDirectory().getAbsolutePath()
-				+ Configuration.LOG_FILE);
+		File logFile = new File(Configuration.getConfigurationDirectory()
+				.getAbsolutePath() + Configuration.LOG_FILE);
 
 		if (logFile.exists()) {
-			String[] logFileContent = new String(Files.readAllBytes(logFile.toPath())).split("\n");
+			String[] logFileContent = new String(Files.readAllBytes(logFile
+					.toPath())).split("\n");
 			for (String line : logFileContent) {
 				if (!line.trim().equals("")) {
 					LinkedList<Data> hashes = new LinkedList<>();
@@ -312,12 +341,12 @@ public class DirectoryWatcher {
 	public synchronized static HashMap<String, LinkedList<Data>> getSynchronizedDevices()
 			throws IOException {
 		HashMap<String, LinkedList<Data>> result = new HashMap<>();
-		File logFile = new File(Configuration.getConfigurationDirectory().getAbsolutePath()
-				+ Configuration.LOG_FILE);
+		File logFile = new File(Configuration.getConfigurationDirectory()
+				.getAbsolutePath() + Configuration.LOG_FILE);
 		try {
 			if (logFile.exists()) {
-				String[] logFileContent = new String(Files.readAllBytes(logFile.toPath()))
-						.split("\n");
+				String[] logFileContent = new String(Files.readAllBytes(logFile
+						.toPath())).split("\n");
 				for (String line : logFileContent) {
 					if (line.trim().equals(""))
 						break;

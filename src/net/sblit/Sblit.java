@@ -6,9 +6,11 @@ import java.util.LinkedList;
 
 import net.sblit.configuration.Configuration;
 import net.sblit.directoryWatcher.DirectoryWatcher;
+import net.sblit.filesync.ApplicationChannelActionListener;
 import net.sblit.gui.SystemTray;
 import net.sblit.message.SblitMessage;
 
+import org.dclayer.application.applicationchannel.AbsApplicationChannel;
 import org.dclayer.exception.net.buf.BufException;
 import org.dclayer.net.Data;
 import org.dclayer.net.buf.StreamByteBuf;
@@ -29,6 +31,14 @@ public class Sblit {
 
 	public synchronized static void exit() {
 		terminate = true;
+		System.out.println("Channels vorher: " + Configuration.getChannels().size());
+		for(Data channel : Configuration.getChannels()){
+			System.out.println("Anzahl Transfers: " +((ApplicationChannelActionListener)((AbsApplicationChannel)Configuration.getChannel(channel)).getApplicationChannelActionListener()).getTransfers());
+			if(((ApplicationChannelActionListener)((AbsApplicationChannel)Configuration.getChannel(channel)).getApplicationChannelActionListener()).getTransfers() <= 0){
+				Configuration.removeChannel(channel);
+			}
+		}
+		System.out.println("Channels nachher: " + Configuration.getChannels().size());
 		if (Configuration.getChannels().size() <= 0)
 			System.exit(0);
 	}
@@ -89,6 +99,7 @@ public class Sblit {
 									new StreamByteBuf(Configuration.getChannel(
 											channel).getOutputStream())
 											.write(message);
+									((ApplicationChannelActionListener)((AbsApplicationChannel)Configuration.getChannel(channel)).getApplicationChannelActionListener()).incrementTransfers();
 								} catch (BufException e) {
 									e.printStackTrace();
 								}
