@@ -194,7 +194,6 @@ public class ApplicationChannelActionListener
 
 	private synchronized void sendFileResponse(String path, Data need,
 			Data newHash) throws BufException {
-		transfers++;
 		message.set(SblitMessage.FILE_RESPONSE);
 		System.out.println("Path:" + path);
 		message.fileResponse.path.setString(path);
@@ -232,12 +231,14 @@ public class ApplicationChannelActionListener
 				need = new Data(new byte[] { 0x00 });
 				newHash = requestedHashes.get(requestedHashes.size() - 1);
 			} else {
+				transfers++;
 				need = new Data(new byte[] { 0x01 });
 				conflict(requestedHashes, ownHashes, path);
 				newHash = requestedHashes.get(requestedHashes.size() - 1);
 				Configuration.getFileStateListener().registerFile(path);
 			}
 		} catch (NullPointerException e) {
+			transfers++;
 			need = new Data(new byte[] { 0x01 });
 			newHash = requestedHashes.get(requestedHashes.size() - 1);
 			Configuration.getFileStateListener().registerFile(path);
@@ -322,6 +323,7 @@ public class ApplicationChannelActionListener
 					path, logs);
 		}
 		transfers--;
+		System.out.println("Transfers: " + transfers + ", Channels: " + Configuration.getChannels().size());
 		if (transfers <= 0 && Sblit.terminate) {
 			Configuration.removeChannel(applicationChannel.getRemotePublicKey()
 					.toData());
@@ -355,6 +357,7 @@ public class ApplicationChannelActionListener
 					e.getMessage());
 		}
 		transfers--;
+		System.out.println("Transfers: " + transfers);
 		if (transfers <= 0 && Sblit.terminate) {
 			Configuration.removeChannel(applicationChannel.getRemotePublicKey()
 					.toData());
@@ -374,6 +377,14 @@ public class ApplicationChannelActionListener
 			delete.delete();
 			Configuration.getFileStateListener().deleteFile(deleteMessage.filePath.getString());
 		}
+	}
+	
+	public int incrementTransfers(){
+		System.out.println("increment Transfers");
+		return transfers++;
+	}
+	public int getTransfers(){
+		return transfers;
 	}
 
 }
