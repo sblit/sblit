@@ -99,7 +99,7 @@ public class ReceiverConfiguration {
 		}
 	}
 
-	void removeReceiver(String address) {
+	void removeReceiver(RSAPublicKey address) {
 		receivers.remove(address);
 		updateFile(receiverFile, receivers);
 	}

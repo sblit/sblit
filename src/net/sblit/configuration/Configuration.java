@@ -205,7 +205,7 @@ public class Configuration {
 		receiverConfiguration.addReceiver(name, address);
 	}
 
-	public static void removeReceiver(String address) {
+	public static void removeReceiver(RSAPublicKey address) {
 		receiverConfiguration.removeReceiver(address);
 	}
 
