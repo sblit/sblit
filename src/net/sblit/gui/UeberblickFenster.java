@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.sblit.configuration.Configuration;
 import net.sblit.fileProcessing.FileStateListener;
 
 import org.eclipse.swt.SWT;
@@ -32,8 +33,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
 
 public class UeberblickFenster implements FileStateListener{
-	//	File fileList = new File(Configuration.getConfigurationDirectory().getAbsoluteFile(),"fileList.txt");
-	File fileList = new File("C:\\Users\\Andi\\AppData\\Roaming\\SBLIT","fileList.txt");
+		File fileList = new File(Configuration.getConfigurationDirectory().getAbsoluteFile(),"fileList.txt");
+//	File fileList = new File("C:\\Users\\Andi\\AppData\\Roaming\\SBLIT","fileList.txt");
 	Display display = Display.getCurrent();
 	Shell shell = new Shell(display);
 	private Label syncStateImgLbl;
