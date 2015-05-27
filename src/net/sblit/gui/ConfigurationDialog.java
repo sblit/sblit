@@ -1,14 +1,20 @@
 package net.sblit.gui;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import net.sblit.configuration.Configuration;
 
 import org.dclayer.crypto.key.RSAPublicKey;
+import org.dclayer.exception.crypto.CryptoException;
+import org.dclayer.exception.net.buf.BufException;
+import org.dclayer.exception.net.parse.ParseException;
+import org.dclayer.net.buf.StreamByteBuf;
+import org.dclayer.net.component.DataComponent;
 import org.dclayer.net.component.KeyComponent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -18,9 +24,11 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -37,13 +45,14 @@ import org.eclipse.swt.widgets.TableItem;
  *
  */
 public class ConfigurationDialog{
-	Shell configShell;
-	HashMap<KeyComponent, String> receiverChanges = new HashMap<>();
+	static Shell configShell;
+	HashMap<net.sblit.crypto.RSAPublicKey, String> receiverChanges = new HashMap<>();
 	HashMap<KeyComponent, String> partnerChanges = new HashMap<>();	
 
 	public ConfigurationDialog(){
-		this.configShell = new Shell (Display.getCurrent(), SWT.CLOSE | SWT.RESIZE | SWT.APPLICATION_MODAL);
+		configShell = new Shell (Display.getCurrent(), SWT.CLOSE | SWT.RESIZE | SWT.SYSTEM_MODAL);
 		create();
+		centerShell();
 	}
 
 	private void create(){
@@ -111,11 +120,11 @@ public class ConfigurationDialog{
 	}
 
 	public void close(){
-		configShell.close();
+		configShell.dispose();
 	}
 
 	/**
-	 * Draws the {Group} including the save button and the cancel button
+	 * Draws the Group including the save button and the cancel button
 	 * @param parent
 	 */
 	private void drawquitBtns(Composite parent) {
@@ -147,17 +156,26 @@ public class ConfigurationDialog{
 		{
 			@Override public void widgetSelected(final SelectionEvent e)
 			{
-				// TODO add/removeReceiver
+				saveChangesAction();
 				close();
 			}
 		});
 		layoutData = new GridData(SWT.RIGHT, SWT.BOTTOM, false, false, 1, 1);
 		saveBtn.setLayoutData(layoutData);		
 	}
-	
-	private void writeTableToFile(Table table, File file){
-		
+
+
+	private void saveChangesAction(){
+		for (Entry<net.sblit.crypto.RSAPublicKey, String> entry : receiverChanges.entrySet())
+		{
+			if(entry.getValue() == null){
+				Configuration.removeReceiver(entry.getKey());
+			} else {
+				Configuration.addReceiver(entry.getValue(), entry.getKey());
+			}
+		}
 	}
+
 
 	/**
 	 * Draws the Group where the sblit directory can be chosen
@@ -181,7 +199,9 @@ public class ConfigurationDialog{
 			{
 				DirectoryDialog dirDialog = new DirectoryDialog(configShell);
 				dirDialog.open();
-				directoryPathLbl.setText(dirDialog.getFilterPath().toString());
+				if(dirDialog.getFilterPath().toString() != ""){
+					directoryPathLbl.setText(dirDialog.getFilterPath().toString());
+				}
 			}
 		});
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
@@ -190,46 +210,22 @@ public class ConfigurationDialog{
 
 
 	/**
-	 * Draws the {Group} including the table of the receivers
+	 * Draws the Group including the table of the receivers
 	 * @param parent
 	 */
 	private void drawReceiverGroup(Group parent) {
-		/*Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
-		receiverFileStateLbl.setText("");
-		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
-		receiverFileStateLbl.setLayoutData(layoutData);
-
-		Composite importExportCmpst = new Composite(parent, 0);
-		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, true, false, 2, 1);
-		importExportCmpst.setLayoutData(layoutData);
-		GridLayout layout = new GridLayout(2, false);
-		layout.marginRight = -4;
-		layout.marginTop = -5;
-		layout.marginBottom = -5;
-		importExportCmpst.setLayout(layout);
-
-		Button importBtn = new Button(importExportCmpst, SWT.PUSH);
-		importBtn.setText("Import");
-		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, true, false, 1, 1);
-		importBtn.setLayoutData(layoutData);
-
-		Button exportBtn = new Button(importExportCmpst, SWT.PUSH);
-		exportBtn.setText("Export");
-		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
-		exportBtn.setLayoutData(layoutData);*/
-
 		final Table receiverTable = new Table(parent, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION);
 		fillReceiverTable(receiverTable);
 		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
 		receiverTable.setLayoutData(layoutData);
 
 		Button editReceiverBtn = new Button(parent, SWT.PUSH);
-		editReceiverBtn.setText("Edit");
+		editReceiverBtn.setText("Edit Hostname");
 		editReceiverBtn.addSelectionListener(new SelectionAdapter()
 		{
 			@Override public void widgetSelected(final SelectionEvent e)
 			{
-				editReceiver(receiverTable);
+				editReceiverAction(receiverTable);
 			}
 		});
 		layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1);
@@ -241,7 +237,7 @@ public class ConfigurationDialog{
 		{
 			@Override public void widgetSelected(final SelectionEvent e)
 			{
-				addReceiver(receiverTable);
+				addReceiverAction(receiverTable);
 			}
 		});
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, true, false, 1, 1);
@@ -249,66 +245,124 @@ public class ConfigurationDialog{
 
 		Button removeReceiverBtn = new Button(parent, SWT.PUSH);
 		removeReceiverBtn.setText("Remove");
+		removeReceiverBtn.addSelectionListener(new SelectionAdapter()
+		{
+			@Override public void widgetSelected(final SelectionEvent e)
+			{
+				removeReceiverAction(receiverTable);
+			}
+		});
 		layoutData = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
 		removeReceiverBtn.setLayoutData(layoutData);
 	}
-	
-	private void editReceiver(Table receiverTable){
-		String[] input = new String[2];
+
+	private void editReceiverAction(Table receiverTable){
 		try{
-		// TODO StringInput --> receiversChange.put(...);
-		TableItem selection = receiverTable.getSelection()[0];
-		String oldHost = selection.getText(0);
-		StringInputDialog receiverDialog = new StringInputDialog();
-		receiverDialog.setMessage("Put in a new hostname:");
-		receiverDialog.setInput(oldHost);
-		receiverDialog.open();
-		if(receiverDialog.getInput() != "" && oldHost!=receiverDialog.getInput()){
-			selection.setText(0, receiverDialog.getInput());
-			
-		}
+			TableItem selection = receiverTable.getSelection()[0];
+			String oldHost = selection.getText(0);
+			StringInputDialog receiverDialog = new StringInputDialog();
+			receiverDialog.setMessage("Put in a new hostname:");
+			receiverDialog.setInput(oldHost);
+			String input = receiverDialog.open();
+			if(input != null && oldHost!=input){
+				receiverChanges.put((net.sblit.crypto.RSAPublicKey) selection.getData(), input);
+				selection.setText(0, input);
+			}
 		} catch(ArrayIndexOutOfBoundsException ex){
 			// No Row Selected
 		}
 	}
-	
-	private void addReceiver(Table receiverTable){
-		// TODO importReceiver --> receiversChange.put(...);
-		String[] input = new String[2];
+
+	private void removeReceiverAction(Table receiverTable){
 		try{
-		TableItem selection = receiverTable.getSelection()[0];
-		String oldHost = selection.getText(0).toString();
-		String oldKey  = selection.getText(1).toString();					
-		StringInputDialog receiverDialog = new StringInputDialog();
-		receiverDialog.setMessage("Edit the receiver.  Format: hostname;publicKey");
-		receiverDialog.setInput(oldHost + ";" + oldKey);
-		input = receiverDialog.open();
-		String newHost = input[0];
-		String newKey = input[1];
-		if(oldHost!=newHost && oldKey!=newKey){
-			ReceiverConfigSaved = false;
-			selection.setText(0, newHost);
-			
-			selection.setText(1, newKey);
-		}
+			TableItem selection = receiverTable.getSelection()[0];
+			receiverChanges.put((net.sblit.crypto.RSAPublicKey) selection.getData(), null);
+			selection.dispose();
 		} catch(ArrayIndexOutOfBoundsException ex){
 			// No Row Selected
 		}
 	}
 
 	/**
-	 * Draws the {Group} including the table of partners
+	 * Opens a FileDialog, reads the chosen file and sets the read symmtric Key + add the read remote RSAPublicKey to the list of receivers.
+	 */
+	private void addReceiverAction(Table receiverTable){
+		FileDialog fileChooserDialog = new FileDialog(configShell, SWT.SINGLE);
+		fileChooserDialog.setFilterPath(System.getProperty("user.home"));
+		fileChooserDialog.setFilterNames(new String[] {"All Files (*.*)" });
+		fileChooserDialog.setFilterExtensions(new String[] {"*.*"} );
+		String path = fileChooserDialog.open();
+
+		DataComponent symmetricKey = new DataComponent();
+		KeyComponent remotePublicKey = new KeyComponent();
+
+		if(path != null){
+			try {
+				StreamByteBuf streamByteBuf = new StreamByteBuf(new FileInputStream(new File(fileChooserDialog.getFilterPath(),fileChooserDialog.getFileName())));
+				symmetricKey.read(streamByteBuf);
+				remotePublicKey.read(streamByteBuf);
+			} catch (FileNotFoundException e) {
+				SystemTray.notifyUser("Error", "File not found.", "The selected file has not been found.");
+			} catch (ParseException e) {
+				SystemTray.notifyUser("Error", "Analysing Error.", "An error occured while analysing the key file.");
+				e.printStackTrace();
+			} catch (BufException e) {
+				SystemTray.notifyUser("Error", "Reading Error.", "An error occured while reading the key file.");
+				e.printStackTrace();
+			} 
+
+			// TODO Check if there is already a Key configured and wheather it should be overwritten or not
+			// Like: The host of this key file has a different symmetrical key, which causes issues to other devices. 
+			// Do you want to overwrite ... 
+			Configuration.setSymmetricKey(symmetricKey.getData().getData());
+
+
+			try {
+				RSAPublicKey remoteKeyTempDCL = (RSAPublicKey) remotePublicKey.getKeyComponent().getKey();
+				net.sblit.crypto.RSAPublicKey remoteKeyTempSblit = new net.sblit.crypto.RSAPublicKey(remoteKeyTempDCL.getRSAKeyParameters());
+
+				if(remoteKeyExists(receiverTable, remoteKeyTempSblit)==false){
+
+					StringInputDialog hostnameDialog = new StringInputDialog();
+					hostnameDialog.setMessage("Please type the hostname of the receiver");
+					hostnameDialog.setInput("Laptop");
+					String input = hostnameDialog.open();
+
+					if(input != null){
+						TableItem newReceiver = new TableItem(receiverTable, SWT.NONE);
+						newReceiver.setText(0, input);
+						newReceiver.setText(1, remoteKeyTempSblit.hashCode() + "");
+						newReceiver.setData(remoteKeyTempSblit);
+
+						receiverChanges.put(remoteKeyTempSblit, input);
+					}
+				}
+			} catch (CryptoException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			// TODO Adding the remotePublicKey to "My Devices" (GUI).
+		}
+	}
+	
+
+	private boolean remoteKeyExists(Table table,
+			net.sblit.crypto.RSAPublicKey key) {
+		for(int i = 0; i < table.getItemCount(); i++){
+			if(table.getItem(i).getData()==key){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Draws the Group including the table of partners
 	 * @param parent
 	 */
 	private void drawPartnerGroup(Group parent) {
-		/*Label receiverFileStateLbl = new Label(parent, SWT.BOLD);
-		receiverFileStateLbl.setText("");
-		GridData layoutData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1);
-		layoutData.verticalSpan = 6;
-		receiverFileStateLbl.setLayoutData(layoutData);*/
-
 		Table receiverTable = new Table(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION);
-		fillPartnerTable(receiverTable, true);
+		fillPartnerTable(receiverTable);
 		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true, 3, 1);
 		receiverTable.setLayoutData(layoutData);
 
@@ -338,52 +392,39 @@ public class ConfigurationDialog{
 		TableColumn keyColumn = new TableColumn(table, SWT.LEFT);
 		keyColumn.setText("Public Key");
 
-		TableItem item = null;;
-
-		for (Map.Entry<RSAPublicKey, String> entry : Configuration.getReceiversAndNames().entrySet())
+		TableItem item = null;
+		
+		for (Entry<net.sblit.crypto.RSAPublicKey, String> entry : Configuration.getReceiversAndNames().entrySet())
 		{
+			
 			item = new TableItem(table, SWT.NONE);
-//			item.setText(0, entry.getValue());		// Value = Hostname
-//			item.setText(1, new KeyComponent().setRSAKeyComponent().setKey(entry.getKey()));		// Key   = RSA PublicKey
-			item.setData(entry.getValue(), entry.getKey());
-			System.out.println(item.getData());
+			item.setText(0, entry.getValue());		// Value = Hostname
+			item.setText(1, entry.getKey().hashCode() + "");		// Key   = RSA PublicKey
+			item.setData(entry.getKey());
 		}
 
 		table.getColumn(0).pack();
 		table.getColumn(1).pack();
 	}
 
+
 	/**
 	 * 
-	 * @return A {HashMap} with 4 rows of dummy data (hostname - rnd key)
+	 * @return A HashMap with 4 rows of dummy data (hostname - rnd key)
 	 */
-	private HashMap<String, String> dummyReceiverHashMap() {
-		HashMap<String, String> hashMap = new HashMap<>();
-		String[] hostnames = {"Laptop","Desktop", "Arbeit", "Opa-PC"};
+	//	private HashMap<String, String> dummyReceiverHashMap() {
+	//		HashMap<String, String> hashMap = new HashMap<>();
+	//		String[] hostnames = {"Laptop","Desktop", "Arbeit", "Opa-PC"};
+	//
+	//		for(String s : hostnames) {
+	//			hashMap.put(s, getRandomHexString(40));
+	//		}
+	//		System.out.println(hashMap.toString());
+	//		return hashMap;
+	//	}
 
-		for(String s : hostnames) {
-			hashMap.put(s, getRandomHexString(40));
-		}
-		System.out.println(hashMap.toString());
-		return hashMap;
-	}
+	private void fillPartnerTable(Table table) {
 
-	private void fillPartnerTable(Table table, boolean insertDummyData) {
-		if (insertDummyData){
-			table.setLinesVisible (true);
-			table.setHeaderVisible (true);
-
-			TableColumn keyColumn = new TableColumn(table, SWT.LEFT);
-			keyColumn.setText("Public Key");
-
-			int n = 10;
-			TableItem item;
-			for(int i = 0; i < n; i++) {
-				item = new TableItem(table, SWT.NONE);
-				item.setText(0, getRandomHexString(40));
-			}
-			table.getColumn(0).pack();
-		}
 	}
 
 	private String getRandomHexString(int numchars){
@@ -400,11 +441,11 @@ public class ConfigurationDialog{
 		return configShell;
 	}
 
-	private void centerShell(Shell shell, Display display) {
-		Rectangle bounds = display.getBounds();
-		int width = 600;
-		int height = 450;
+	private void centerShell() {
+		Rectangle bounds = Display.getCurrent().getBounds();
+		int width = 500;
+		int height = 375;
 
-		shell.setBounds((bounds.width-width)/2, (bounds.height-height)/2, width, height);;
+		configShell.setBounds((bounds.width-width)/2, (bounds.height-height)/2, width, height);;
 	}
 }

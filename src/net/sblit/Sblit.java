@@ -44,7 +44,8 @@ public class Sblit {
 				try {
 					new SystemTray();
 				} catch (Exception e) {
-
+					System.out.println("GUI konnte nicht gestartet werden");
+					e.printStackTrace();
 				}
 			}
 		}).start();

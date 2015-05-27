@@ -9,7 +9,10 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Dialog;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
@@ -20,10 +23,10 @@ public class StringInputDialog{
 	private String input   = "";
 
 	public StringInputDialog() {
-		this.inputDialogShell = new Shell(display);
+		this.inputDialogShell = new Shell(display, SWT.CLOSE | SWT.RESIZE | SWT.APPLICATION_MODAL);
 	}
 
-	public String[] open() {
+	public String open() {
 		drawContent();
 		inputDialogShell.open();
 		inputDialogShell.setBounds(10, 10, 300, 130);
@@ -32,7 +35,15 @@ public class StringInputDialog{
 			if (!display.readAndDispatch())
 				display.sleep();
 		}
-		return input.split(";");
+		
+//		inputDialogShell.addListener (SWT.Close, new Listener () {
+//			@Override
+//			public void handleEvent (Event event) {
+//					input = null;
+//				}
+//		});
+		
+		return input;
 	}
 	
 	private void drawContent(){
