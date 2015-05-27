@@ -127,6 +127,11 @@ public class Configuration {
 				public void error(String path, String message) {
 					// nothing to do
 				}
+
+				@Override
+				public void deleteFile(String path) {
+					// nothing to do					
+				}
 			};
 	}
 

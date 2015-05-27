@@ -372,6 +372,7 @@ public class ApplicationChannelActionListener
 						Configuration.otherSlash, Configuration.slash));
 		if (delete.exists()) {
 			delete.delete();
+			Configuration.getFileStateListener().deleteFile(deleteMessage.filePath.getString());
 		}
 	}
 
